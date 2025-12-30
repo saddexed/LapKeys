@@ -5,6 +5,16 @@
              Startup="Application_Startup"
              Exit="Application_Exit">
     <Application.Resources>
-         
+        <!-- Theme Brushes (Light Theme Defaults) -->
+        <SolidColorBrush x:Key="BackgroundBrush" Color="#F3F3F3"/>
+        <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="CardBorderBrush" Color="#E5E5E5"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#0078D4"/>
+        <SolidColorBrush x:Key="AccentHoverBrush" Color="#106EBE"/>
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1A1A1A"/>
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#666666"/>
+        <SolidColorBrush x:Key="TextTertiaryBrush" Color="#999999"/>
+        <SolidColorBrush x:Key="SubtleBrush" Color="#F5F5F5"/>
+        <SolidColorBrush x:Key="SubtleHoverBrush" Color="#E8E8E8"/>
     </Application.Resources>
 </Application>

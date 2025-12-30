@@ -5,67 +5,379 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LapKeys"
         xmlns:vm="clr-namespace:LapKeys.ViewModels"
+        xmlns:helpers="clr-namespace:LapKeys.Helpers"
         mc:Ignorable="d"
         Title="{Binding Title}" 
-        Height="500" 
-        Width="700"
+        Height="480" 
+        Width="600"
         MinHeight="400"
-        MinWidth="600"
+        MinWidth="500"
         WindowStartupLocation="CenterScreen"
-        StateChanged="Window_StateChanged">
+        Background="{DynamicResource BackgroundBrush}"
+        StateChanged="Window_StateChanged"
+        Loaded="Window_Loaded"
+        PreviewKeyDown="Window_PreviewKeyDown">
     
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
     
-    <Grid Margin="20">
+    <Window.Resources>
+        <!-- Converters -->
+        <helpers:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <helpers:CaptureButtonTextConverter x:Key="CaptureButtonTextConverter"/>
+        
+        <!-- Modern Button Style -->
+        <Style x:Key="ModernButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource SubtleBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource SubtleHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource CardBorderBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Accent Button Style -->
+        <Style x:Key="AccentButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#0A5A9E"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Rate Button Style (with selection support) -->
+        <Style x:Key="RateButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource AccentHoverBrush}"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#0A5A9E"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Card Style -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="20"/>
+        </Style>
+        
+        <!-- Toggle Switch Style -->
+        <Style x:Key="ToggleSwitchStyle" TargetType="CheckBox">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid>
+                            <Border x:Name="track" 
+                                    Width="44" Height="22" 
+                                    CornerRadius="11"
+                                    Background="{DynamicResource SubtleBrush}"
+                                    BorderBrush="{DynamicResource CardBorderBrush}"
+                                    BorderThickness="1"
+                                    Cursor="Hand"/>
+                            <Border x:Name="thumb" 
+                                    Width="16" Height="16" 
+                                    CornerRadius="8"
+                                    Background="{DynamicResource TextSecondaryBrush}"
+                                    HorizontalAlignment="Left"
+                                    Margin="3,0,0,0"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="track" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="track" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="thumb" Property="Background" Value="White"/>
+                                <Setter TargetName="thumb" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="thumb" Property="Margin" Value="0,0,3,0"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="track" Property="BorderBrush" Value="{DynamicResource TextSecondaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Icon Button Style (for theme toggle) -->
+        <Style x:Key="IconButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource SubtleBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         
         <!-- Header -->
-        <TextBlock Grid.Row="0" 
-                   Text="LapKeys - Laptop Control" 
-                   FontSize="24" 
-                   FontWeight="Bold"
-                   Margin="0,0,0,20"/>
+        <Grid Grid.Row="0" Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="LapKeys" 
+                           FontSize="28" 
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <TextBlock Text="Laptop Display Control" 
+                           FontSize="14"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           Margin="0,4,0,0"/>
+            </StackPanel>
+            
+            <!-- Theme Toggle Icon -->
+            <Button Grid.Column="1" 
+                    Style="{StaticResource IconButtonStyle}"
+                    Command="{Binding ToggleThemeCommand}"
+                    ToolTip="Toggle dark mode"
+                    VerticalAlignment="Top">
+                <TextBlock Text="🌓" FontSize="20"/>
+            </Button>
+        </Grid>
         
-        <!-- Main Content Area -->
-        <Border Grid.Row="1" 
-                BorderBrush="#CCCCCC" 
-                BorderThickness="1" 
-                CornerRadius="5"
-                Padding="15">
+        <!-- Refresh Rate Card -->
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,0,0,16">
             <StackPanel>
-                <TextBlock Text="Welcome to LapKeys!" 
-                           FontSize="16" 
-                           Margin="0,0,0,10"/>
-                <TextBlock Text="This application will help you control your laptop settings."
-                           TextWrapping="Wrap"
-                           Foreground="#666666"/>
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Refresh Rate" 
+                                   FontSize="16" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="Select from available display refresh rates"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock FontSize="32" 
+                                   FontWeight="Light"
+                                   Foreground="{DynamicResource AccentBrush}"
+                                   VerticalAlignment="Center"
+                                   Text="{Binding CurrentRefreshRate, Mode=OneWay}"/>
+                        <TextBlock Text="Hz" 
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   VerticalAlignment="Bottom"
+                                   Margin="4,0,0,6"/>
+                    </StackPanel>
+                </Grid>
                 
-                <!-- Placeholder for future controls -->
-                <TextBlock Text="Settings controls will appear here..."
-                           Margin="0,20,0,0"
-                           FontStyle="Italic"
-                           Foreground="#999999"/>
+                <!-- Rate Buttons -->
+                <ItemsControl ItemsSource="{Binding AvailableRefreshRates}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding DisplayText}"
+                                    Style="{StaticResource RateButtonStyle}"
+                                    Margin="0,0,8,8"
+                                    Click="RefreshRateButton_Click"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
         </Border>
         
+        <!-- Hotkey Card -->
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Keyboard Shortcut" 
+                               FontSize="16" 
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    <TextBlock Text="Press anywhere to cycle refresh rates"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               Margin="0,4,0,12"/>
+                    
+                    <Border Background="{DynamicResource SubtleBrush}" 
+                            CornerRadius="6"
+                            Padding="16,10"
+                            HorizontalAlignment="Left">
+                        <TextBlock Text="{Binding HotkeyDisplayText}" 
+                                   FontFamily="Segoe UI"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    </Border>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" VerticalAlignment="Bottom" Orientation="Horizontal">
+                    <Button Content="Cancel" 
+                            Command="{Binding CancelHotkeyCaptureCommand}"
+                            Style="{StaticResource ModernButtonStyle}"
+                            Visibility="{Binding IsCapturingHotkey, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Margin="0,0,8,0"/>
+                    <Button Content="{Binding IsCapturingHotkey, Converter={StaticResource CaptureButtonTextConverter}}" 
+                            Command="{Binding StartCaptureHotkeyCommand}"
+                            Style="{StaticResource ModernButtonStyle}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Spacer -->
+        <Grid Grid.Row="3"/>
+        
         <!-- Footer -->
-        <StackPanel Grid.Row="2" 
-                    Orientation="Horizontal" 
-                    HorizontalAlignment="Right"
-                    Margin="0,10,0,0">
-            <Button Content="Minimize to Tray" 
-                    Padding="10,5" 
-                    Click="MinimizeToTray_Click"
-                    Margin="0,0,10,0"/>
-            <Button Content="Close" 
-                    Padding="10,5" 
-                    Click="Close_Click"/>
-        </StackPanel>
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Status -->
+            <TextBlock Grid.Column="0" 
+                       Text="{Binding StatusMessage}" 
+                       FontSize="12"
+                       Foreground="{DynamicResource TextTertiaryBrush}"
+                       VerticalAlignment="Center"/>
+            
+            <!-- Buttons -->
+            <StackPanel Grid.Column="1" 
+                        Orientation="Horizontal">
+                <Button Content="Refresh" 
+                        Command="{Binding RefreshDisplayInfoCommand}"
+                        Style="{StaticResource ModernButtonStyle}"
+                        Margin="0,0,8,0"/>
+                <Button Content="Minimize to Tray" 
+                        Style="{StaticResource ModernButtonStyle}"
+                        Click="MinimizeToTray_Click"
+                        Margin="0,0,8,0"/>
+                <Button Content="Close" 
+                        Style="{StaticResource ModernButtonStyle}"
+                        Click="Close_Click"/>
+            </StackPanel>
+        </Grid>
     </Grid>
+    </ScrollViewer>
 </Window>
