@@ -117,6 +117,15 @@ public partial class MainWindow : Window
         }
     }
 
+    private void CycleRateButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.DataContext is Models.RefreshRateOption option)
+        {
+            option.IsIncludedInCycle = !option.IsIncludedInCycle;
+            ViewModel.SaveCycleRates();
+        }
+    }
+
     private void MinimizeToTray_Click(object sender, RoutedEventArgs e)
     {
         Hide();
@@ -133,6 +142,36 @@ public partial class MainWindow : Window
         {
             Hide();
         }
+    }
+
+    private void ScrollViewer_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+    {
+        // Reduce scroll speed by dividing the delta
+        var scrollViewer = sender as System.Windows.Controls.ScrollViewer;
+        if (scrollViewer != null)
+        {
+            double scrollAmount = e.Delta / 3.0; // Reduce speed to 1/3
+            scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset - scrollAmount);
+            e.Handled = true;
+        }
+    }
+
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        if (ViewModel.MinimizeToTrayOnClose)
+        {
+            // Cancel the close and minimize to tray instead
+            e.Cancel = true;
+            Hide();
+        }
+        else
+        {
+            // Actually close the application
+            _hotkeyService.Dispose();
+            System.Windows.Application.Current.Shutdown();
+        }
+        
+        base.OnClosing(e);
     }
 
     protected override void OnClosed(EventArgs e)

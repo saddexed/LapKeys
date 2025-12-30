@@ -9,6 +9,7 @@ namespace LapKeys.ViewModels;
 public class MainViewModel : ViewModelBase
 {
     private readonly ThemeService _themeService;
+    private AppSettings _settings;
     private string _title = "LapKeys - Laptop Control";
     private int _currentRefreshRate;
     private string _statusMessage = string.Empty;
@@ -16,6 +17,7 @@ public class MainViewModel : ViewModelBase
     private bool _isCapturingHotkey;
     private string _hotkeyDisplayText = string.Empty;
     private bool _isDarkMode;
+    private bool _minimizeToTrayOnClose = true;
 
     public string Title
     {
@@ -49,6 +51,7 @@ public class MainViewModel : ViewModelBase
             if (SetProperty(ref _isDarkMode, value))
             {
                 _themeService.CurrentTheme = value ? ThemeService.Theme.Dark : ThemeService.Theme.Light;
+                SaveSettings();
             }
         }
     }
@@ -79,6 +82,18 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _isCapturingHotkey, value);
     }
 
+    public bool MinimizeToTrayOnClose
+    {
+        get => _minimizeToTrayOnClose;
+        set
+        {
+            if (SetProperty(ref _minimizeToTrayOnClose, value))
+            {
+                SaveSettings();
+            }
+        }
+    }
+
     public ICommand CycleRefreshRateCommand { get; }
     public ICommand RefreshDisplayInfoCommand { get; }
     public ICommand StartCaptureHotkeyCommand { get; }
@@ -92,13 +107,19 @@ public class MainViewModel : ViewModelBase
     public MainViewModel()
     {
         _themeService = new ThemeService();
+        _settings = SettingsService.Load();
 
-        // Initialize default hotkey: Ctrl+Shift+R (less likely to conflict)
+        // Apply loaded settings
+        _isDarkMode = _settings.IsDarkMode;
+        _minimizeToTrayOnClose = _settings.MinimizeToTrayOnClose;
+        _themeService.CurrentTheme = _isDarkMode ? ThemeService.Theme.Dark : ThemeService.Theme.Light;
+
+        // Initialize hotkey from settings
         _cycleRefreshRateHotkey = new HotkeyBinding(
             "Cycle Refresh Rate",
             "CycleRefreshRate",
-            ModifierKeys.Control | ModifierKeys.Shift,
-            Key.R,
+            _settings.GetModifierKeys(),
+            _settings.GetKey(),
             1);
         _hotkeyDisplayText = _cycleRefreshRateHotkey.ToString();
 
@@ -119,14 +140,19 @@ public class MainViewModel : ViewModelBase
         if (currentMode != null)
         {
             CurrentRefreshRate = currentMode.RefreshRate;
-            Title = $"LapKeys - {currentMode.Width}x{currentMode.Height} @ {currentMode.RefreshRate}Hz";
+            Title = $"LapKeys - {currentMode.Width}x{currentMode.Height}@{currentMode.RefreshRate}Hz";
         }
+
+        // Get saved cycle rates
+        var savedCycleRates = _settings.GetCycleRefreshRates();
 
         // Update available refresh rates
         AvailableRefreshRates.Clear();
         foreach (var rate in DisplayService.GetAvailableRefreshRates())
         {
-            AvailableRefreshRates.Add(new RefreshRateOption(rate, rate == CurrentRefreshRate));
+            // If we have saved cycle rates, use those; otherwise default to all included
+            bool isIncludedInCycle = savedCycleRates.Count == 0 || savedCycleRates.Contains(rate);
+            AvailableRefreshRates.Add(new RefreshRateOption(rate, rate == CurrentRefreshRate, isIncludedInCycle));
         }
 
         StatusMessage = $"Found {AvailableRefreshRates.Count} refresh rates";
@@ -142,7 +168,13 @@ public class MainViewModel : ViewModelBase
 
     public void ExecuteCycleRefreshRate()
     {
-        int newRate = DisplayService.CycleRefreshRate();
+        // Get the list of rates that are included in the cycle
+        var cycleRates = AvailableRefreshRates
+            .Where(r => r.IsIncludedInCycle)
+            .Select(r => r.Rate)
+            .ToList();
+
+        int newRate = DisplayService.CycleRefreshRate(cycleRates);
         if (newRate > 0)
         {
             CurrentRefreshRate = newRate;
@@ -206,11 +238,37 @@ public class MainViewModel : ViewModelBase
                 key,
                 1);
             StatusMessage = $"Hotkey set to {CycleRefreshRateHotkey}";
+            SaveSettings();
         }
         else
         {
             HotkeyDisplayText = CycleRefreshRateHotkey.ToString();
             StatusMessage = "Invalid hotkey (need modifier + key)";
         }
+    }
+
+    /// <summary>
+    /// Saves the current cycle rate selection to settings.
+    /// Called when cycle rates are toggled.
+    /// </summary>
+    public void SaveCycleRates()
+    {
+        SaveSettings();
+    }
+
+    private void SaveSettings()
+    {
+        _settings.IsDarkMode = IsDarkMode;
+        _settings.MinimizeToTrayOnClose = MinimizeToTrayOnClose;
+        _settings.HotkeyModifiers = CycleRefreshRateHotkey.Modifiers.ToString();
+        _settings.HotkeyKey = CycleRefreshRateHotkey.Key.ToString();
+        
+        // Save cycle rates
+        var cycleRates = AvailableRefreshRates
+            .Where(r => r.IsIncludedInCycle)
+            .Select(r => r.Rate);
+        _settings.SetCycleRefreshRates(cycleRates);
+        
+        SettingsService.Save(_settings);
     }
 }

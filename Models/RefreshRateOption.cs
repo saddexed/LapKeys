@@ -6,6 +6,7 @@ namespace LapKeys.Models;
 public class RefreshRateOption : ViewModels.ViewModelBase
 {
     private bool _isSelected;
+    private bool _isIncludedInCycle = true;
 
     public int Rate { get; set; }
 
@@ -15,11 +16,18 @@ public class RefreshRateOption : ViewModels.ViewModelBase
         set => SetProperty(ref _isSelected, value);
     }
 
+    public bool IsIncludedInCycle
+    {
+        get => _isIncludedInCycle;
+        set => SetProperty(ref _isIncludedInCycle, value);
+    }
+
     public string DisplayText => $"{Rate} Hz";
 
-    public RefreshRateOption(int rate, bool isSelected = false)
+    public RefreshRateOption(int rate, bool isSelected = false, bool isIncludedInCycle = true)
     {
         Rate = rate;
         IsSelected = isSelected;
+        IsIncludedInCycle = isIncludedInCycle;
     }
 }

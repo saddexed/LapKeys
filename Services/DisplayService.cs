@@ -137,16 +137,35 @@ public static class DisplayService
     /// </summary>
     public static int CycleRefreshRate()
     {
+        return CycleRefreshRate(null);
+    }
+
+    /// <summary>
+    /// Cycles to the next refresh rate from the provided list, or all available if null.
+    /// Returns the new refresh rate, or -1 if cycling failed.
+    /// </summary>
+    public static int CycleRefreshRate(List<int>? allowedRates)
+    {
         var currentMode = GetCurrentDisplayMode();
         if (currentMode == null)
             return -1;
 
-        var availableRates = GetAvailableRefreshRates();
-        if (availableRates.Count <= 1)
+        var availableRates = allowedRates ?? GetAvailableRefreshRates();
+        if (availableRates.Count == 0)
             return currentMode.RefreshRate;
+        
+        if (availableRates.Count == 1)
+            return availableRates[0];
+
+        // Sort the rates for consistent cycling
+        availableRates = availableRates.OrderBy(r => r).ToList();
 
         // Find current rate index
         int currentIndex = availableRates.IndexOf(currentMode.RefreshRate);
+        
+        // If current rate isn't in the list, start from first
+        if (currentIndex < 0)
+            currentIndex = -1;
         
         // Calculate next index (wrap around)
         int nextIndex = (currentIndex + 1) % availableRates.Count;
