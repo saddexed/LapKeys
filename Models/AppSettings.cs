@@ -9,6 +9,7 @@ public class AppSettings
 {
     public bool IsDarkMode { get; set; } = false;
     public bool MinimizeToTrayOnClose { get; set; } = true;
+    public bool RunAtStartup { get; set; } = false;
     
     // Hotkey settings
     public string HotkeyModifiers { get; set; } = "Control, Shift";

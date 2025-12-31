@@ -16,10 +16,22 @@ public partial class App : System.Windows.Application
         _trayIconManager = new TrayIconManager();
         _trayIconManager.Initialize();
 
+        // Check for --minimized argument (used when starting with Windows)
+        bool startMinimized = e.Args.Contains("--minimized");
+
         // Create and show main window
         var mainWindow = new MainWindow();
         MainWindow = mainWindow;
-        mainWindow.Show();
+        
+        if (startMinimized)
+        {
+            // Don't show window, just run in tray
+            mainWindow.Hide();
+        }
+        else
+        {
+            mainWindow.Show();
+        }
     }
 
     private void Application_Exit(object sender, ExitEventArgs e)

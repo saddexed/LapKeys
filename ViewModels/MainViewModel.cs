@@ -23,6 +23,7 @@ public class MainViewModel : ViewModelBase
     private bool _isDarkMode;
     private string _capturingHotkeyType = string.Empty;
     private bool _minimizeToTrayOnClose = true;
+    private bool _runAtStartup;
     private bool _isRefreshRateHotkeyEnabled = true;
     private bool _isBrightnessHotkeysEnabled = true;
     private int _currentBrightness;
@@ -145,6 +146,19 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    public bool RunAtStartup
+    {
+        get => _runAtStartup;
+        set
+        {
+            if (SetProperty(ref _runAtStartup, value))
+            {
+                Helpers.StartupManager.IsEnabled = value;
+                SaveSettings();
+            }
+        }
+    }
+
     public bool IsRefreshRateHotkeyEnabled
     {
         get => _isRefreshRateHotkeyEnabled;
@@ -208,9 +222,13 @@ public class MainViewModel : ViewModelBase
         // Apply loaded settings
         _isDarkMode = _settings.IsDarkMode;
         _minimizeToTrayOnClose = _settings.MinimizeToTrayOnClose;
+        _runAtStartup = _settings.RunAtStartup;
         _isRefreshRateHotkeyEnabled = _settings.IsRefreshRateHotkeyEnabled;
         _isBrightnessHotkeysEnabled = _settings.IsBrightnessHotkeysEnabled;
         _themeService.CurrentTheme = _isDarkMode ? ThemeService.Theme.Dark : ThemeService.Theme.Light;
+        
+        // Sync registry with saved setting
+        Helpers.StartupManager.IsEnabled = _runAtStartup;
 
         // Initialize hotkey from settings
         _cycleRefreshRateHotkey = new HotkeyBinding(
@@ -482,6 +500,7 @@ public class MainViewModel : ViewModelBase
     {
         _settings.IsDarkMode = IsDarkMode;
         _settings.MinimizeToTrayOnClose = MinimizeToTrayOnClose;
+        _settings.RunAtStartup = RunAtStartup;
         _settings.HotkeyModifiers = CycleRefreshRateHotkey.Modifiers.ToString();
         _settings.HotkeyKey = CycleRefreshRateHotkey.Key.ToString();
         

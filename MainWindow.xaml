@@ -670,6 +670,31 @@
                               VerticalAlignment="Center"
                               Margin="12,0,0,0"/>
                 </Grid>
+                
+                <!-- Run at Startup Setting -->
+                <Grid Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Run at Startup" 
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="Automatically start LapKeys when Windows starts"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   Margin="0,2,0,0"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                    
+                    <CheckBox Grid.Column="1" 
+                              Style="{StaticResource ToggleSwitchStyle}"
+                              IsChecked="{Binding RunAtStartup}"
+                              VerticalAlignment="Center"
+                              Margin="12,0,0,0"/>
+                </Grid>
             </StackPanel>
         </Border>
         
