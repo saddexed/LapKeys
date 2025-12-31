@@ -1,0 +1,63 @@
+<Window x:Class="LapKeys.Views.BrightnessOverlay"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Brightness"
+        Width="280"
+        Height="80"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        WindowStartupLocation="Manual"
+        ResizeMode="NoResize">
+    
+    <Border Background="#E0202020"
+            CornerRadius="12"
+            Padding="20,16"
+            Margin="8">
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="16" Opacity="0.4" ShadowDepth="2"/>
+        </Border.Effect>
+        
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Sun Icon -->
+            <TextBlock Grid.Column="0" 
+                       Text="☀" 
+                       FontSize="20"
+                       Foreground="#AAAAAA"
+                       VerticalAlignment="Center"
+                       Margin="0,0,12,0"/>
+            
+            <!-- Progress Bar -->
+            <Grid Grid.Column="1" x:Name="ProgressBarContainer" VerticalAlignment="Center">
+                <Border Background="#40FFFFFF" 
+                        CornerRadius="4" 
+                        Height="8"/>
+                <Border x:Name="ProgressFill"
+                        Background="#0078D4" 
+                        CornerRadius="4" 
+                        Height="8"
+                        HorizontalAlignment="Left"/>
+            </Grid>
+            
+            <!-- Percentage -->
+            <TextBlock Grid.Column="2" 
+                       x:Name="PercentText"
+                       Text="100%"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="White"
+                       VerticalAlignment="Center"
+                       Margin="12,0,0,0"
+                       Width="45"
+                       TextAlignment="Right"/>
+        </Grid>
+    </Border>
+</Window>

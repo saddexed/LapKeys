@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using LapKeys.Services;
 using LapKeys.ViewModels;
+using LapKeys.Views;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using Key = System.Windows.Input.Key;
 using Keyboard = System.Windows.Input.Keyboard;
@@ -26,6 +27,9 @@ public partial class MainWindow : Window
         // Subscribe to ViewModel events
         ViewModel.RequestHotkeyCapture += OnRequestHotkeyCapture;
         ViewModel.RefreshRateChanged += OnRefreshRateChanged;
+        ViewModel.BrightnessChanged += OnBrightnessChanged;
+        ViewModel.RefreshRateHotkeyToggled += RegisterCurrentHotkey;
+        ViewModel.BrightnessHotkeysToggled += RegisterCurrentHotkey;
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -42,21 +46,40 @@ public partial class MainWindow : Window
     {
         _hotkeyService.UnregisterAllHotkeys();
         
-        if (_hotkeyService.RegisterHotkey(ViewModel.CycleRefreshRateHotkey))
+        // Register refresh rate hotkey if enabled
+        if (ViewModel.IsRefreshRateHotkeyEnabled)
         {
-            ViewModel.StatusMessage = $"Hotkey registered: {ViewModel.CycleRefreshRateHotkey}";
+            if (_hotkeyService.RegisterHotkey(ViewModel.CycleRefreshRateHotkey))
+            {
+                ViewModel.StatusMessage = $"Hotkey registered: {ViewModel.CycleRefreshRateHotkey}";
+            }
+            else
+            {
+                ViewModel.StatusMessage = $"Failed to register hotkey (may be in use by another app)";
+            }
         }
-        else
+        
+        // Register brightness hotkeys if supported and enabled
+        if (ViewModel.IsBrightnessSupported && ViewModel.IsBrightnessHotkeysEnabled)
         {
-            ViewModel.StatusMessage = $"Failed to register hotkey (may be in use by another app)";
+            _hotkeyService.RegisterHotkey(ViewModel.BrightnessUpHotkey);
+            _hotkeyService.RegisterHotkey(ViewModel.BrightnessDownHotkey);
         }
     }
 
     private void OnHotkeyPressed(object? sender, Models.HotkeyBinding binding)
     {
-        if (binding.Action == "CycleRefreshRate")
+        switch (binding.Action)
         {
-            ViewModel.ExecuteCycleRefreshRate();
+            case "CycleRefreshRate":
+                ViewModel.ExecuteCycleRefreshRate();
+                break;
+            case "BrightnessUp":
+                ViewModel.ExecuteIncreaseBrightness();
+                break;
+            case "BrightnessDown":
+                ViewModel.ExecuteDecreaseBrightness();
+                break;
         }
     }
 
@@ -70,6 +93,11 @@ public partial class MainWindow : Window
     private void OnRefreshRateChanged(int newRate)
     {
         // Could show a notification here
+    }
+
+    private void OnBrightnessChanged(int brightness)
+    {
+        BrightnessOverlay.ShowOverlay(brightness);
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -124,6 +152,57 @@ public partial class MainWindow : Window
             option.IsIncludedInCycle = !option.IsIncludedInCycle;
             ViewModel.SaveCycleRates();
         }
+    }
+
+    private bool _isSliderDragging;
+
+    private void BrightnessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        // Update brightness whenever slider value changes (click, drag, or programmatic)
+        if (sender is System.Windows.Controls.Slider slider)
+        {
+            ViewModel.SetBrightness((int)slider.Value);
+        }
+    }
+
+    private void BrightnessSlider_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Slider slider)
+        {
+            _isSliderDragging = true;
+            slider.CaptureMouse();
+            
+            // Immediately set value based on click position
+            UpdateSliderValueFromMouse(slider, e);
+            
+            e.Handled = true; // Prevent default slider behavior
+        }
+    }
+
+    private void BrightnessSlider_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Slider slider && _isSliderDragging)
+        {
+            _isSliderDragging = false;
+            slider.ReleaseMouseCapture();
+        }
+    }
+
+    private void BrightnessSlider_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Slider slider && _isSliderDragging)
+        {
+            UpdateSliderValueFromMouse(slider, e);
+        }
+    }
+
+    private void UpdateSliderValueFromMouse(System.Windows.Controls.Slider slider, System.Windows.Input.MouseEventArgs e)
+    {
+        var mousePos = e.GetPosition(slider);
+        double ratio = mousePos.X / slider.ActualWidth;
+        ratio = Math.Max(0, Math.Min(1, ratio)); // Clamp to 0-1
+        double newValue = slider.Minimum + (ratio * (slider.Maximum - slider.Minimum));
+        slider.Value = newValue;
     }
 
     private void MinimizeToTray_Click(object sender, RoutedEventArgs e)
