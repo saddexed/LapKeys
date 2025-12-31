@@ -1,6 +1,4 @@
 using System.Drawing;
-using System.IO;
-using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
 using WpfApplication = System.Windows.Application;
@@ -33,14 +31,14 @@ public class TrayIconManager : IDisposable
 
     private Icon GetApplicationIcon()
     {
-        // Try to load the application icon, fallback to system icon
+        // Try to load the application icon from WPF resource
         try
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            var iconStream = assembly.GetManifestResourceStream("LapKeys.app.ico");
-            if (iconStream != null)
+            var resourceUri = new Uri("pack://application:,,,/app.ico", UriKind.Absolute);
+            var streamInfo = System.Windows.Application.GetResourceStream(resourceUri);
+            if (streamInfo != null)
             {
-                return new Icon(iconStream);
+                return new Icon(streamInfo.Stream);
             }
         }
         catch

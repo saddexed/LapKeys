@@ -14,6 +14,7 @@
         MinWidth="500"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BackgroundBrush}"
+        Icon="app.ico"
         StateChanged="Window_StateChanged"
         Loaded="Window_Loaded"
         PreviewKeyDown="Window_PreviewKeyDown">
