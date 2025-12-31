@@ -92,7 +92,7 @@ public partial class MainWindow : Window
 
     private void OnRefreshRateChanged(int newRate)
     {
-        // Could show a notification here
+        RefreshRateOverlay.ShowOverlay(newRate);
     }
 
     private void OnBrightnessChanged(int brightness)
