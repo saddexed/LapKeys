@@ -47,21 +47,10 @@ jobs:
         files: |
           LapKeys-v${{ steps.get_version.outputs.VERSION }}-win-x64.exe
         body: |
-          ## LapKeys ${{ github.ref_name }}
-          
-          ### Download
-          
-          `LapKeys-v${{ steps.get_version.outputs.VERSION }}-win-x64.exe` (~2.7 MB)
+          ### LapKeys ${{ github.ref_name }}
           
           **Requirements:** [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
           
-          ### What's Changed
-          See commit history for details.
-          
-          ### Installation
-          1. Download the executable
-          2. Run `LapKeys.exe`
-          3. (Optional) Enable "Run at Startup" in Settings
         draft: false
         prerelease: false
       env:
