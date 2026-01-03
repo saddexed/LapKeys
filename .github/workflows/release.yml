@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*' # Trigger on version tags like v1.0.0, v1.2.3, etc.
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -61,6 +64,5 @@ jobs:
           3. (Optional) Enable "Run at Startup" in Settings
         draft: false
         prerelease: false
-        make_latest: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
