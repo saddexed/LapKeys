@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags like v1.0.0, v1.2.3, etc.
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Get version from tag
+      id: get_version
+      shell: pwsh
+      run: |
+        $version = "${{ github.ref_name }}".TrimStart('v')
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        echo "Version: $version"
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build Framework-Dependent
+      run: dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o ./publish-fd
+       
+    - name: Rename executables
+      shell: pwsh
+      run: |
+        $version = "${{ steps.get_version.outputs.VERSION }}"
+        Move-Item "./publish-fd/LapKeys.exe" "./LapKeys-v$version-win-x64.exe"
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          LapKeys-v${{ steps.get_version.outputs.VERSION }}-win-x64.exe
+        body: |
+          ## LapKeys ${{ github.ref_name }}
+          
+          ### Download
+          
+          `LapKeys-v${{ steps.get_version.outputs.VERSION }}-win-x64.exe` (~2.7 MB)
+          
+          **Requirements:** [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
+          
+          ### What's Changed
+          See commit history for details.
+          
+          ### Installation
+          1. Download the executable
+          2. Run `LapKeys.exe`
+          3. (Optional) Enable "Run at Startup" in Settings
+        draft: false
+        prerelease: false
+        make_latest: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
