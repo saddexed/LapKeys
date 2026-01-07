@@ -29,7 +29,7 @@ A lightweight .NET WPF application for controlling laptop hardware settings incl
 - **Windows** 10 or later
 - **.NET 8.0 SDK** - [Download here](https://dotnet.microsoft.com/download/dotnet/8.0)
 - **Visual Studio 2022** or **VS Code**
-- 
+
 ## Installation
 
 ### Option 1: Download Release (Recommended)
@@ -40,7 +40,7 @@ A lightweight .NET WPF application for controlling laptop hardware settings incl
 ### Option 2: Build from Source
 
 ```powershell
-git clone https://github.com/saddexed/LapKeys.git
+git clone "https://github.com/saddexed/LapKeys.git"
 cd LapKeys
 dotnet publish -c Release -o ./publish
 ```

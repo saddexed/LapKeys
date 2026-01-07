@@ -26,7 +26,8 @@
     <Window.Resources>
         <!-- Converters -->
         <helpers:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-        <helpers:CaptureButtonTextConverter x:Key="CaptureButtonTextConverter"/>
+        <helpers:BoolToTextConverter x:Key="BoolToTextConverter"/>
+        <helpers:HotkeyButtonTextConverter x:Key="HotkeyButtonTextConverter"/>
         
         <!-- Modern Button Style -->
         <Style x:Key="ModernButtonStyle" TargetType="Button">
@@ -512,16 +513,18 @@
                                    Foreground="{DynamicResource TextPrimaryBrush}"/>
                     </Border>
                     
-                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Button Content="Cancel" 
-                                Command="{Binding CancelHotkeyCaptureCommand}"
-                                Style="{StaticResource ModernButtonStyle}"
-                                Visibility="{Binding IsCapturingHotkey, Converter={StaticResource BoolToVisibilityConverter}}"
-                                Margin="0,0,8,0"/>
-                        <Button Content="{Binding IsCapturingHotkey, Converter={StaticResource CaptureButtonTextConverter}}" 
-                                Command="{Binding StartCaptureHotkeyCommand}"
-                                Style="{StaticResource ModernButtonStyle}"/>
-                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Command="{Binding ToggleCaptureHotkeyCommand}"
+                            CommandParameter="CycleRefreshRate"
+                            Style="{StaticResource ModernButtonStyle}">
+                        <Button.Content>
+                            <MultiBinding Converter="{StaticResource HotkeyButtonTextConverter}"
+                                          ConverterParameter="CycleRefreshRate">
+                                <Binding Path="IsCapturingHotkey"/>
+                                <Binding Path="CapturingHotkeyType"/>
+                            </MultiBinding>
+                        </Button.Content>
+                    </Button>
                 </Grid>
                 
                 <!-- Cycle Rates Selection -->
@@ -605,11 +608,19 @@
                                    Foreground="{DynamicResource TextPrimaryBrush}"/>
                     </Border>
                     <Button Grid.Column="2"
-                            Content="Set"
-                            Command="{Binding StartCaptureBrightnessDownHotkeyCommand}"
+                            Command="{Binding ToggleCaptureHotkeyCommand}"
+                            CommandParameter="BrightnessDown"
                             Style="{StaticResource ModernButtonStyle}"
                             Padding="8,4"
-                            Margin="8,0,0,0"/>
+                            Margin="8,0,0,0">
+                        <Button.Content>
+                            <MultiBinding Converter="{StaticResource HotkeyButtonTextConverter}"
+                                          ConverterParameter="BrightnessDown">
+                                <Binding Path="IsCapturingHotkey"/>
+                                <Binding Path="CapturingHotkeyType"/>
+                            </MultiBinding>
+                        </Button.Content>
+                    </Button>
                     
                     <TextBlock Grid.Column="3" 
                                Text="Up:" 
@@ -628,11 +639,19 @@
                                    Foreground="{DynamicResource TextPrimaryBrush}"/>
                     </Border>
                     <Button Grid.Column="5"
-                            Content="Set"
-                            Command="{Binding StartCaptureBrightnessUpHotkeyCommand}"
+                            Command="{Binding ToggleCaptureHotkeyCommand}"
+                            CommandParameter="BrightnessUp"
                             Style="{StaticResource ModernButtonStyle}"
                             Padding="8,4"
-                            Margin="8,0,0,0"/>
+                            Margin="8,0,0,0">
+                        <Button.Content>
+                            <MultiBinding Converter="{StaticResource HotkeyButtonTextConverter}"
+                                          ConverterParameter="BrightnessUp">
+                                <Binding Path="IsCapturingHotkey"/>
+                                <Binding Path="CapturingHotkeyType"/>
+                            </MultiBinding>
+                        </Button.Content>
+                    </Button>
                 </Grid>
             </StackPanel>
         </Border>

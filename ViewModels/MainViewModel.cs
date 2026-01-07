@@ -203,6 +203,7 @@ public class MainViewModel : ViewModelBase
     public ICommand StartCaptureBrightnessUpHotkeyCommand { get; }
     public ICommand StartCaptureBrightnessDownHotkeyCommand { get; }
     public ICommand ToggleThemeCommand { get; }
+    public ICommand ToggleCaptureHotkeyCommand { get; }
     public ICommand CancelHotkeyCaptureCommand { get; }
     public ICommand IncreaseBrightnessCommand { get; }
     public ICommand DecreaseBrightnessCommand { get; }
@@ -263,6 +264,7 @@ public class MainViewModel : ViewModelBase
         StartCaptureBrightnessUpHotkeyCommand = new RelayCommand(_ => StartHotkeyCapture("BrightnessUp"), _ => !IsCapturingHotkey);
         StartCaptureBrightnessDownHotkeyCommand = new RelayCommand(_ => StartHotkeyCapture("BrightnessDown"), _ => !IsCapturingHotkey);
         ToggleThemeCommand = new RelayCommand(_ => IsDarkMode = !IsDarkMode);
+        ToggleCaptureHotkeyCommand = new RelayCommand(param => ToggleCaptureHotkey(param as string ?? string.Empty));
         CancelHotkeyCaptureCommand = new RelayCommand(_ => CancelHotkeyCapture());
         IncreaseBrightnessCommand = new RelayCommand(_ => ExecuteIncreaseBrightness(), _ => IsBrightnessSupported);
         DecreaseBrightnessCommand = new RelayCommand(_ => ExecuteDecreaseBrightness(), _ => IsBrightnessSupported);
@@ -362,6 +364,21 @@ public class MainViewModel : ViewModelBase
         }
         
         RequestHotkeyCapture?.Invoke();
+    }
+
+    /// <summary>
+    /// Toggles hotkey capture: starts if not capturing, cancels if currently capturing.
+    /// </summary>
+    private void ToggleCaptureHotkey(string hotkeyType)
+    {
+        if (IsCapturingHotkey)
+        {
+            CancelHotkeyCapture();
+        }
+        else
+        {
+            StartHotkeyCapture(hotkeyType);
+        }
     }
 
     public void CancelHotkeyCapture()
