@@ -4,9 +4,6 @@ using Color = System.Windows.Media.Color;
 
 namespace LapKeys.Services;
 
-/// <summary>
-/// Manages application theme (light/dark mode).
-/// </summary>
 public class ThemeService
 {
     public enum Theme

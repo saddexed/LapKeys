@@ -1,8 +1,5 @@
 namespace LapKeys.Models;
 
-/// <summary>
-/// Represents a refresh rate option with selection state.
-/// </summary>
 public class RefreshRateOption : ViewModels.ViewModelBase
 {
     private bool _isSelected;

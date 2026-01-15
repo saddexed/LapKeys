@@ -19,7 +19,6 @@ public class TrayIconManager : IDisposable
             Text = "LapKeys - Laptop Control"
         };
 
-        // Create context menu
         var contextMenu = new ContextMenuStrip();
         contextMenu.Items.Add("Show", null, OnShow);
         contextMenu.Items.Add(new ToolStripSeparator());
@@ -31,7 +30,6 @@ public class TrayIconManager : IDisposable
 
     private Icon GetApplicationIcon()
     {
-        // Try to load the application icon from WPF resource
         try
         {
             var resourceUri = new Uri("pack://application:,,,/app.ico", UriKind.Absolute);
@@ -42,9 +40,7 @@ public class TrayIconManager : IDisposable
             }
         }
         catch
-        {
-            // Fallback to default
-        }
+        {}
 
         return SystemIcons.Application;
     }

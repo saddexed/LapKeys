@@ -2,9 +2,6 @@ using System.Management;
 
 namespace LapKeys.Services;
 
-/// <summary>
-/// Service for controlling laptop display brightness using WMI.
-/// </summary>
 public static class BrightnessService
 {
     private static ManagementScope? _scope;
@@ -12,14 +9,8 @@ public static class BrightnessService
     private static bool _isSupported = true;
     private static int _lastSetBrightness = -1;
 
-    /// <summary>
-    /// Gets whether brightness control is supported on this device.
-    /// </summary>
     public static bool IsSupported => _isSupported;
 
-    /// <summary>
-    /// Initializes the WMI connection for brightness control.
-    /// </summary>
     private static void Initialize()
     {
         if (_isInitialized) return;
@@ -37,9 +28,6 @@ public static class BrightnessService
         }
     }
 
-    /// <summary>
-    /// Gets the current brightness level (0-100).
-    /// </summary>
     public static int GetBrightness()
     {
         Initialize();
@@ -65,9 +53,6 @@ public static class BrightnessService
         return -1;
     }
 
-    /// <summary>
-    /// Gets the available brightness levels supported by the display.
-    /// </summary>
     public static int[] GetBrightnessLevels()
     {
         Initialize();
@@ -89,21 +74,16 @@ public static class BrightnessService
         }
         catch
         {
-            // Fall back to standard 0-100 range
         }
 
         return Enumerable.Range(0, 101).ToArray();
     }
 
-    /// <summary>
-    /// Sets the brightness level (0-100).
-    /// </summary>
     public static bool SetBrightness(int brightness)
     {
         Initialize();
         if (!_isSupported) return false;
 
-        // Clamp to valid range
         brightness = Math.Clamp(brightness, 0, 100);
 
         try
@@ -126,12 +106,8 @@ public static class BrightnessService
         return false;
     }
 
-    /// <summary>
-    /// Increases brightness by the specified step amount.
-    /// </summary>
     public static int IncreaseBrightness(int step = 10)
     {
-        // Use last set value if available, otherwise query current
         int current = _lastSetBrightness >= 0 ? _lastSetBrightness : GetBrightness();
         if (current < 0) return -1;
 
@@ -141,12 +117,8 @@ public static class BrightnessService
         return -1;
     }
 
-    /// <summary>
-    /// Decreases brightness by the specified step amount.
-    /// </summary>
     public static int DecreaseBrightness(int step = 10)
     {
-        // Use last set value if available, otherwise query current
         int current = _lastSetBrightness >= 0 ? _lastSetBrightness : GetBrightness();
         if (current < 0) return -1;
 

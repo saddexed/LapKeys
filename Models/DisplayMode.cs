@@ -1,8 +1,5 @@
 namespace LapKeys.Models;
 
-/// <summary>
-/// Represents a display mode with resolution and refresh rate.
-/// </summary>
 public class DisplayMode
 {
     public int Width { get; set; }

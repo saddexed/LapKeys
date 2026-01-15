@@ -208,7 +208,6 @@ public class MainViewModel : ViewModelBase
     public ICommand IncreaseBrightnessCommand { get; }
     public ICommand DecreaseBrightnessCommand { get; }
 
-    // Events for the view to handle
     public event Action? RequestHotkeyCapture;
     public event Action<int>? RefreshRateChanged;
     public event Action<int>? BrightnessChanged;
@@ -220,7 +219,6 @@ public class MainViewModel : ViewModelBase
         _themeService = new ThemeService();
         _settings = SettingsService.Load();
 
-        // Apply loaded settings
         _isDarkMode = _settings.IsDarkMode;
         _minimizeToTrayOnClose = _settings.MinimizeToTrayOnClose;
         _runAtStartup = _settings.RunAtStartup;
@@ -228,10 +226,8 @@ public class MainViewModel : ViewModelBase
         _isBrightnessHotkeysEnabled = _settings.IsBrightnessHotkeysEnabled;
         _themeService.CurrentTheme = _isDarkMode ? ThemeService.Theme.Dark : ThemeService.Theme.Light;
         
-        // Sync registry with saved setting
         Helpers.StartupManager.IsEnabled = _runAtStartup;
 
-        // Initialize hotkey from settings
         _cycleRefreshRateHotkey = new HotkeyBinding(
             "Cycle Refresh Rate",
             "CycleRefreshRate",
@@ -240,7 +236,6 @@ public class MainViewModel : ViewModelBase
             1);
         _hotkeyDisplayText = _cycleRefreshRateHotkey.ToString();
 
-        // Initialize brightness hotkeys from settings
         _brightnessUpHotkey = new HotkeyBinding(
             "Brightness Up",
             "BrightnessUp",
@@ -257,7 +252,6 @@ public class MainViewModel : ViewModelBase
             3);
         _brightnessDownHotkeyDisplayText = _brightnessDownHotkey.ToString();
 
-        // Commands
         CycleRefreshRateCommand = new RelayCommand(_ => ExecuteCycleRefreshRate());
         RefreshDisplayInfoCommand = new RelayCommand(_ => RefreshDisplayInfo());
         StartCaptureHotkeyCommand = new RelayCommand(_ => StartHotkeyCapture("CycleRefreshRate"), _ => !IsCapturingHotkey);
@@ -269,10 +263,7 @@ public class MainViewModel : ViewModelBase
         IncreaseBrightnessCommand = new RelayCommand(_ => ExecuteIncreaseBrightness(), _ => IsBrightnessSupported);
         DecreaseBrightnessCommand = new RelayCommand(_ => ExecuteDecreaseBrightness(), _ => IsBrightnessSupported);
 
-        // Load initial display info
         RefreshDisplayInfo();
-        
-        // Initialize brightness
         InitializeBrightness();
     }
 
@@ -285,14 +276,11 @@ public class MainViewModel : ViewModelBase
             Title = $"LapKeys - {currentMode.Width}x{currentMode.Height}@{currentMode.RefreshRate}Hz";
         }
 
-        // Get saved cycle rates
         var savedCycleRates = _settings.GetCycleRefreshRates();
 
-        // Update available refresh rates
         AvailableRefreshRates.Clear();
         foreach (var rate in DisplayService.GetAvailableRefreshRates())
         {
-            // If we have saved cycle rates, use those; otherwise default to all included
             bool isIncludedInCycle = savedCycleRates.Count == 0 || savedCycleRates.Contains(rate);
             AvailableRefreshRates.Add(new RefreshRateOption(rate, rate == CurrentRefreshRate, isIncludedInCycle));
         }
@@ -310,7 +298,6 @@ public class MainViewModel : ViewModelBase
 
     public void ExecuteCycleRefreshRate()
     {
-        // Get the list of rates that are included in the cycle
         var cycleRates = AvailableRefreshRates
             .Where(r => r.IsIncludedInCycle)
             .Select(r => r.Rate)
@@ -366,9 +353,6 @@ public class MainViewModel : ViewModelBase
         RequestHotkeyCapture?.Invoke();
     }
 
-    /// <summary>
-    /// Toggles hotkey capture: starts if not capturing, cancels if currently capturing.
-    /// </summary>
     private void ToggleCaptureHotkey(string hotkeyType)
     {
         if (IsCapturingHotkey)
@@ -385,7 +369,6 @@ public class MainViewModel : ViewModelBase
     {
         IsCapturingHotkey = false;
         
-        // Restore the original display text based on what was being captured
         switch (CapturingHotkeyType)
         {
             case "CycleRefreshRate":
@@ -434,7 +417,6 @@ public class MainViewModel : ViewModelBase
         }
         else
         {
-            // Restore the original text
             switch (CapturingHotkeyType)
             {
                 case "CycleRefreshRate":
@@ -453,10 +435,6 @@ public class MainViewModel : ViewModelBase
         CapturingHotkeyType = string.Empty;
     }
 
-    /// <summary>
-    /// Saves the current cycle rate selection to settings.
-    /// Called when cycle rates are toggled.
-    /// </summary>
     public void SaveCycleRates()
     {
         SaveSettings();
@@ -498,9 +476,6 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Sets brightness to a specific value (called from slider).
-    /// </summary>
     public void SetBrightness(int brightness)
     {
         brightness = Math.Clamp(brightness, 0, 100);
@@ -521,17 +496,14 @@ public class MainViewModel : ViewModelBase
         _settings.HotkeyModifiers = CycleRefreshRateHotkey.Modifiers.ToString();
         _settings.HotkeyKey = CycleRefreshRateHotkey.Key.ToString();
         
-        // Save brightness hotkeys
         _settings.BrightnessUpModifiers = BrightnessUpHotkey.Modifiers.ToString();
         _settings.BrightnessUpKey = BrightnessUpHotkey.Key.ToString();
         _settings.BrightnessDownModifiers = BrightnessDownHotkey.Modifiers.ToString();
         _settings.BrightnessDownKey = BrightnessDownHotkey.Key.ToString();
         
-        // Save hotkey enabled states
         _settings.IsRefreshRateHotkeyEnabled = IsRefreshRateHotkeyEnabled;
         _settings.IsBrightnessHotkeysEnabled = IsBrightnessHotkeysEnabled;
         
-        // Save cycle rates
         var cycleRates = AvailableRefreshRates
             .Where(r => r.IsIncludedInCycle)
             .Select(r => r.Rate);

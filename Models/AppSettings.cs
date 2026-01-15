@@ -2,35 +2,25 @@ using System.Windows.Input;
 
 namespace LapKeys.Models;
 
-/// <summary>
-/// Represents the application settings that are persisted.
-/// </summary>
 public class AppSettings
 {
     public bool IsDarkMode { get; set; } = false;
     public bool MinimizeToTrayOnClose { get; set; } = true;
     public bool RunAtStartup { get; set; } = false;
     
-    // Hotkey settings
     public string HotkeyModifiers { get; set; } = "Control, Shift";
     public string HotkeyKey { get; set; } = "R";
     
-    // Brightness hotkey settings
     public string BrightnessUpModifiers { get; set; } = "Control, Shift";
     public string BrightnessUpKey { get; set; } = "Up";
     public string BrightnessDownModifiers { get; set; } = "Control, Shift";
     public string BrightnessDownKey { get; set; } = "Down";
     
-    // Hotkey enabled states
     public bool IsRefreshRateHotkeyEnabled { get; set; } = true;
     public bool IsBrightnessHotkeysEnabled { get; set; } = true;
     
-    // Refresh rates included in cycle (stored as comma-separated values)
     public string CycleRefreshRates { get; set; } = "";
     
-    /// <summary>
-    /// Parses the stored modifiers string to ModifierKeys.
-    /// </summary>
     public ModifierKeys GetModifierKeys()
     {
         var modifiers = ModifierKeys.None;
@@ -50,9 +40,6 @@ public class AppSettings
         return modifiers;
     }
     
-    /// <summary>
-    /// Parses the stored key string to Key enum.
-    /// </summary>
     public Key GetKey()
     {
         if (Enum.TryParse<Key>(HotkeyKey, out var key))
@@ -60,17 +47,11 @@ public class AppSettings
         return Key.R;
     }
     
-    /// <summary>
-    /// Gets brightness up hotkey modifiers.
-    /// </summary>
     public ModifierKeys GetBrightnessUpModifiers()
     {
         return ParseModifiers(BrightnessUpModifiers);
     }
     
-    /// <summary>
-    /// Gets brightness up hotkey key.
-    /// </summary>
     public Key GetBrightnessUpKey()
     {
         if (Enum.TryParse<Key>(BrightnessUpKey, out var key))
@@ -78,17 +59,11 @@ public class AppSettings
         return Key.Up;
     }
     
-    /// <summary>
-    /// Gets brightness down hotkey modifiers.
-    /// </summary>
     public ModifierKeys GetBrightnessDownModifiers()
     {
         return ParseModifiers(BrightnessDownModifiers);
     }
     
-    /// <summary>
-    /// Gets brightness down hotkey key.
-    /// </summary>
     public Key GetBrightnessDownKey()
     {
         if (Enum.TryParse<Key>(BrightnessDownKey, out var key))
@@ -115,9 +90,6 @@ public class AppSettings
         return modifiers;
     }
     
-    /// <summary>
-    /// Gets the list of refresh rates included in the cycle.
-    /// </summary>
     public List<int> GetCycleRefreshRates()
     {
         if (string.IsNullOrEmpty(CycleRefreshRates))
@@ -130,9 +102,6 @@ public class AppSettings
             .ToList();
     }
     
-    /// <summary>
-    /// Sets the cycle refresh rates from a list.
-    /// </summary>
     public void SetCycleRefreshRates(IEnumerable<int> rates)
     {
         CycleRefreshRates = string.Join(",", rates);

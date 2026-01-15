@@ -2,9 +2,6 @@ using System.Windows.Input;
 
 namespace LapKeys.Models;
 
-/// <summary>
-/// Represents a hotkey configuration with modifiers and key.
-/// </summary>
 public class HotkeyBinding
 {
     public string Name { get; set; } = string.Empty;

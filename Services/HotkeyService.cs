@@ -6,9 +6,6 @@ using LapKeys.Native;
 
 namespace LapKeys.Services;
 
-/// <summary>
-/// Manages global hotkey registration and handling.
-/// </summary>
 public class HotkeyService : IDisposable
 {
     private readonly Dictionary<int, HotkeyBinding> _registeredHotkeys = new();
@@ -18,10 +15,6 @@ public class HotkeyService : IDisposable
 
     public event EventHandler<HotkeyBinding>? HotkeyPressed;
 
-    /// <summary>
-    /// Initializes the hotkey service with the main window.
-    /// Must be called after the window is loaded.
-    /// </summary>
     public void Initialize(Window window)
     {
         _windowHandle = new WindowInteropHelper(window).Handle;
@@ -29,9 +22,6 @@ public class HotkeyService : IDisposable
         _hwndSource?.AddHook(WndProc);
     }
 
-    /// <summary>
-    /// Registers a global hotkey.
-    /// </summary>
     public bool RegisterHotkey(HotkeyBinding binding)
     {
         if (_windowHandle == IntPtr.Zero)
@@ -49,9 +39,6 @@ public class HotkeyService : IDisposable
         return false;
     }
 
-    /// <summary>
-    /// Unregisters a hotkey by ID.
-    /// </summary>
     public bool UnregisterHotkey(int id)
     {
         if (_windowHandle == IntPtr.Zero)
@@ -66,9 +53,6 @@ public class HotkeyService : IDisposable
         return false;
     }
 
-    /// <summary>
-    /// Unregisters all hotkeys.
-    /// </summary>
     public void UnregisterAllHotkeys()
     {
         foreach (var id in _registeredHotkeys.Keys.ToList())
@@ -77,9 +61,6 @@ public class HotkeyService : IDisposable
         }
     }
 
-    /// <summary>
-    /// Updates an existing hotkey binding.
-    /// </summary>
     public bool UpdateHotkey(HotkeyBinding newBinding)
     {
         if (_registeredHotkeys.ContainsKey(newBinding.Id))
@@ -90,9 +71,6 @@ public class HotkeyService : IDisposable
         return RegisterHotkey(newBinding);
     }
 
-    /// <summary>
-    /// Gets all registered hotkeys.
-    /// </summary>
     public IReadOnlyList<HotkeyBinding> GetRegisteredHotkeys()
     {
         return _registeredHotkeys.Values.ToList();

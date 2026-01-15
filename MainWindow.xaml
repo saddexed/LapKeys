@@ -581,69 +581,37 @@
                               ToolTip="Enable/disable shortcuts"/>
                 </Grid>
                 
-                <Grid Margin="0,12,0,0">
+                <!-- Brightness Up Hotkey -->
+                <Grid Margin="0,8,0,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     
                     <TextBlock Grid.Column="0" 
-                               Text="Down:" 
+                               Text="Increase:" 
                                FontSize="12"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                VerticalAlignment="Center"
-                               Margin="0,0,8,0"/>
-                    <Border Grid.Column="1" 
-                            Background="{DynamicResource SubtleBrush}" 
-                            CornerRadius="4"
-                            Padding="8,4"
-                            HorizontalAlignment="Left">
-                        <TextBlock Text="{Binding BrightnessDownHotkeyDisplayText}" 
-                                   FontSize="11"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
-                    </Border>
-                    <Button Grid.Column="2"
-                            Command="{Binding ToggleCaptureHotkeyCommand}"
-                            CommandParameter="BrightnessDown"
-                            Style="{StaticResource ModernButtonStyle}"
-                            Padding="8,4"
-                            Margin="8,0,0,0">
-                        <Button.Content>
-                            <MultiBinding Converter="{StaticResource HotkeyButtonTextConverter}"
-                                          ConverterParameter="BrightnessDown">
-                                <Binding Path="IsCapturingHotkey"/>
-                                <Binding Path="CapturingHotkeyType"/>
-                            </MultiBinding>
-                        </Button.Content>
-                    </Button>
+                               Margin="0,0,12,0"/>
                     
-                    <TextBlock Grid.Column="3" 
-                               Text="Up:" 
-                               FontSize="12"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               VerticalAlignment="Center"
-                               Margin="24,0,8,0"/>
-                    <Border Grid.Column="4" 
+                    <Border Grid.Column="1"
                             Background="{DynamicResource SubtleBrush}" 
-                            CornerRadius="4"
-                            Padding="8,4"
+                            CornerRadius="6"
+                            Padding="12,8"
                             HorizontalAlignment="Left">
                         <TextBlock Text="{Binding BrightnessUpHotkeyDisplayText}" 
+                                   FontFamily="Segoe UI"
                                    FontSize="11"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"/>
                     </Border>
-                    <Button Grid.Column="5"
+                    
+                    <Button Grid.Column="2"
                             Command="{Binding ToggleCaptureHotkeyCommand}"
                             CommandParameter="BrightnessUp"
-                            Style="{StaticResource ModernButtonStyle}"
-                            Padding="8,4"
-                            Margin="8,0,0,0">
+                            Style="{StaticResource ModernButtonStyle}">
                         <Button.Content>
                             <MultiBinding Converter="{StaticResource HotkeyButtonTextConverter}"
                                           ConverterParameter="BrightnessUp">
@@ -653,6 +621,48 @@
                         </Button.Content>
                     </Button>
                 </Grid>
+                
+                <!-- Brightness Down Hotkey -->
+                <Grid Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Grid.Column="0" 
+                               Text="Decrease:" 
+                               FontSize="12"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0"/>
+                    
+                    <Border Grid.Column="1"
+                            Background="{DynamicResource SubtleBrush}" 
+                            CornerRadius="6"
+                            Padding="12,8"
+                            HorizontalAlignment="Left">
+                        <TextBlock Text="{Binding BrightnessDownHotkeyDisplayText}" 
+                                   FontFamily="Segoe UI"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    </Border>
+                    
+                    <Button Grid.Column="2"
+                            Command="{Binding ToggleCaptureHotkeyCommand}"
+                            CommandParameter="BrightnessDown"
+                            Style="{StaticResource ModernButtonStyle}">
+                        <Button.Content>
+                            <MultiBinding Converter="{StaticResource HotkeyButtonTextConverter}"
+                                          ConverterParameter="BrightnessDown">
+                                <Binding Path="IsCapturingHotkey"/>
+                                <Binding Path="CapturingHotkeyType"/>
+                            </MultiBinding>
+                        </Button.Content>
+                    </Button>
+                </Grid>
+                
             </StackPanel>
         </Border>
         

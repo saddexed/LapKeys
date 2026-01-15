@@ -4,9 +4,6 @@ using LapKeys.Models;
 
 namespace LapKeys.Services;
 
-/// <summary>
-/// Service for persisting application settings to disk.
-/// </summary>
 public static class SettingsService
 {
     private static readonly string SettingsFolder = Path.Combine(
@@ -20,9 +17,6 @@ public static class SettingsService
         WriteIndented = true
     };
 
-    /// <summary>
-    /// Loads settings from disk, or returns default settings if file doesn't exist.
-    /// </summary>
     public static AppSettings Load()
     {
         try
@@ -42,14 +36,10 @@ public static class SettingsService
         return new AppSettings();
     }
 
-    /// <summary>
-    /// Saves settings to disk.
-    /// </summary>
     public static void Save(AppSettings settings)
     {
         try
         {
-            // Ensure directory exists
             if (!Directory.Exists(SettingsFolder))
             {
                 Directory.CreateDirectory(SettingsFolder);

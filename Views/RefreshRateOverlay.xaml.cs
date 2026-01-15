@@ -3,9 +3,6 @@ using System.Windows.Threading;
 
 namespace LapKeys.Views;
 
-/// <summary>
-/// A Windows-style overlay that appears briefly when refresh rate changes.
-/// </summary>
 public partial class RefreshRateOverlay : Window
 {
     private readonly DispatcherTimer _hideTimer;
@@ -25,7 +22,6 @@ public partial class RefreshRateOverlay : Window
             Hide();
         };
         
-        // Position at bottom center of primary screen
         PositionOverlay();
     }
 
@@ -36,28 +32,18 @@ public partial class RefreshRateOverlay : Window
         Top = screen.Bottom - Height - 60;
     }
 
-    /// <summary>
-    /// Shows the overlay with the specified refresh rate.
-    /// </summary>
     public void ShowRefreshRate(int refreshRate)
     {
-        // Update rate text
         RateText.Text = refreshRate.ToString();
         
-        // Reset and start hide timer
         _hideTimer.Stop();
         _hideTimer.Start();
         
-        // Show the overlay
         Show();
         
-        // Ensure position is correct
         PositionOverlay();
     }
 
-    /// <summary>
-    /// Gets the singleton instance of the refresh rate overlay.
-    /// </summary>
     public static RefreshRateOverlay Instance
     {
         get
@@ -70,9 +56,6 @@ public partial class RefreshRateOverlay : Window
         }
     }
 
-    /// <summary>
-    /// Shows the refresh rate overlay with the specified rate.
-    /// </summary>
     public static void ShowOverlay(int refreshRate)
     {
         Instance.ShowRefreshRate(refreshRate);

@@ -3,15 +3,8 @@ using LapKeys.Native;
 
 namespace LapKeys.Services;
 
-/// <summary>
-/// Service for managing display refresh rates using Windows API.
-/// Similar to QRes functionality.
-/// </summary>
 public static class DisplayService
 {
-    /// <summary>
-    /// Gets the current display mode.
-    /// </summary>
     public static DisplayMode? GetCurrentDisplayMode()
     {
         var devMode = DEVMODE.Create();
@@ -30,9 +23,6 @@ public static class DisplayService
         return null;
     }
 
-    /// <summary>
-    /// Gets all available display modes for the current display.
-    /// </summary>
     public static List<DisplayMode> GetAllDisplayModes()
     {
         var modes = new List<DisplayMode>();
@@ -49,7 +39,6 @@ public static class DisplayService
                 BitsPerPixel = devMode.dmBitsPerPel
             };
 
-            // Avoid duplicates
             if (!modes.Contains(mode))
             {
                 modes.Add(mode);
@@ -59,9 +48,6 @@ public static class DisplayService
         return modes;
     }
 
-    /// <summary>
-    /// Gets available refresh rates for the current resolution.
-    /// </summary>
     public static List<int> GetAvailableRefreshRates()
     {
         var currentMode = GetCurrentDisplayMode();
@@ -71,9 +57,6 @@ public static class DisplayService
         return GetAvailableRefreshRates(currentMode.Width, currentMode.Height);
     }
 
-    /// <summary>
-    /// Gets available refresh rates for a specific resolution.
-    /// </summary>
     public static List<int> GetAvailableRefreshRates(int width, int height)
     {
         var allModes = GetAllDisplayModes();
@@ -86,9 +69,6 @@ public static class DisplayService
             .ToList();
     }
 
-    /// <summary>
-    /// Sets the display refresh rate while maintaining current resolution.
-    /// </summary>
     public static bool SetRefreshRate(int refreshRate)
     {
         var currentMode = GetCurrentDisplayMode();
@@ -98,18 +78,13 @@ public static class DisplayService
         return SetDisplayMode(currentMode.Width, currentMode.Height, refreshRate);
     }
 
-    /// <summary>
-    /// Sets the display mode to the specified resolution and refresh rate.
-    /// </summary>
     public static bool SetDisplayMode(int width, int height, int refreshRate)
     {
         var devMode = DEVMODE.Create();
 
-        // Get current settings as base
         if (!NativeMethods.EnumDisplaySettingsW(null, NativeMethods.ENUM_CURRENT_SETTINGS, ref devMode))
             return false;
 
-        // Set the new values
         devMode.dmPelsWidth = width;
         devMode.dmPelsHeight = height;
         devMode.dmDisplayFrequency = refreshRate;
@@ -117,33 +92,23 @@ public static class DisplayService
                            NativeMethods.DM_PELSHEIGHT | 
                            NativeMethods.DM_DISPLAYFREQUENCY;
 
-        // Test if the mode is valid first
         int testResult = NativeMethods.ChangeDisplaySettingsExW(
             null, ref devMode, IntPtr.Zero, NativeMethods.CDS_TEST, IntPtr.Zero);
 
         if (testResult != NativeMethods.DISP_CHANGE_SUCCESSFUL)
             return false;
 
-        // Apply the change
         int result = NativeMethods.ChangeDisplaySettingsExW(
             null, ref devMode, IntPtr.Zero, NativeMethods.CDS_UPDATEREGISTRY, IntPtr.Zero);
 
         return result == NativeMethods.DISP_CHANGE_SUCCESSFUL;
     }
 
-    /// <summary>
-    /// Cycles to the next available refresh rate for the current resolution.
-    /// Returns the new refresh rate, or -1 if cycling failed.
-    /// </summary>
     public static int CycleRefreshRate()
     {
         return CycleRefreshRate(null);
     }
 
-    /// <summary>
-    /// Cycles to the next refresh rate from the provided list, or all available if null.
-    /// Returns the new refresh rate, or -1 if cycling failed.
-    /// </summary>
     public static int CycleRefreshRate(List<int>? allowedRates)
     {
         var currentMode = GetCurrentDisplayMode();
@@ -157,21 +122,16 @@ public static class DisplayService
         if (availableRates.Count == 1)
             return availableRates[0];
 
-        // Sort the rates for consistent cycling
         availableRates = availableRates.OrderBy(r => r).ToList();
 
-        // Find current rate index
         int currentIndex = availableRates.IndexOf(currentMode.RefreshRate);
         
-        // If current rate isn't in the list, start from first
         if (currentIndex < 0)
             currentIndex = -1;
         
-        // Calculate next index (wrap around)
         int nextIndex = (currentIndex + 1) % availableRates.Count;
         int nextRate = availableRates[nextIndex];
 
-        // Apply the new rate
         if (SetRefreshRate(nextRate))
             return nextRate;
 

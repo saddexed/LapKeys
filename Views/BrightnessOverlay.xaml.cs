@@ -3,9 +3,6 @@ using System.Windows.Threading;
 
 namespace LapKeys.Views;
 
-/// <summary>
-/// A Windows-style brightness overlay that appears briefly when brightness changes.
-/// </summary>
 public partial class BrightnessOverlay : Window
 {
     private readonly DispatcherTimer _hideTimer;
@@ -25,7 +22,6 @@ public partial class BrightnessOverlay : Window
             Hide();
         };
         
-        // Position at bottom center of primary screen
         PositionOverlay();
     }
 
@@ -36,27 +32,19 @@ public partial class BrightnessOverlay : Window
         Top = screen.Bottom - Height - 60;
     }
 
-    /// <summary>
-    /// Shows the overlay with the specified brightness level.
-    /// </summary>
     public void ShowBrightness(int brightness)
     {
         brightness = Math.Clamp(brightness, 0, 100);
         
-        // Update percentage text
         PercentText.Text = $"{brightness}%";
         
-        // Reset and start hide timer
         _hideTimer.Stop();
         _hideTimer.Start();
         
-        // Show the overlay
         Show();
         
-        // Ensure position is correct
         PositionOverlay();
         
-        // Update progress bar width after layout is updated
         Dispatcher.BeginInvoke(new Action(() =>
         {
             double containerWidth = ProgressBarContainer.ActualWidth;
@@ -67,9 +55,6 @@ public partial class BrightnessOverlay : Window
         }), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
-    /// <summary>
-    /// Gets the singleton instance of the brightness overlay.
-    /// </summary>
     public static BrightnessOverlay Instance
     {
         get
@@ -82,9 +67,6 @@ public partial class BrightnessOverlay : Window
         }
     }
 
-    /// <summary>
-    /// Shows the brightness overlay with the specified level.
-    /// </summary>
     public static void ShowOverlay(int brightness)
     {
         Instance.ShowBrightness(brightness);
