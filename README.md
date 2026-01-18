@@ -20,8 +20,7 @@ A lightweight .NET WPF application for controlling laptop hardware settings incl
 
 ## Screenshots
 
-<img src=docs/screenshots/LapKeys-light.jpg height="400">
-<img src=docs/screenshots/LapKeys-dark.jpg height="400">
+<img src=docs/screenshots/LapKeys-light.jpg height="350"><img src=docs/screenshots/LapKeys-dark.jpg height="350">
 
 ## Requirements
 
