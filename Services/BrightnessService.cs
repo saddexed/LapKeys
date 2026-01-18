@@ -5,9 +5,11 @@ namespace LapKeys.Services;
 public static class BrightnessService
 {
     private static ManagementScope? _scope;
+    private static ManagementEventWatcher? _brightnessWatcher;
     private static bool _isInitialized;
     private static bool _isSupported = true;
-    private static int _lastSetBrightness = -1;
+
+    public static event Action<int>? BrightnessChanged;
 
     public static bool IsSupported => _isSupported;
 
@@ -28,6 +30,46 @@ public static class BrightnessService
         }
     }
 
+    public static void StartWatching()
+    {
+        Initialize();
+        if (!_isSupported || _brightnessWatcher != null) return;
+
+        try
+        {
+            var query = new WqlEventQuery("SELECT * FROM WmiMonitorBrightnessEvent");
+            _brightnessWatcher = new ManagementEventWatcher(_scope, query);
+            _brightnessWatcher.EventArrived += OnBrightnessChanged;
+            _brightnessWatcher.Start();
+        }
+        catch
+        {
+        }
+    }
+
+    public static void StopWatching()
+    {
+        if (_brightnessWatcher != null)
+        {
+            _brightnessWatcher.Stop();
+            _brightnessWatcher.EventArrived -= OnBrightnessChanged;
+            _brightnessWatcher.Dispose();
+            _brightnessWatcher = null;
+        }
+    }
+
+    private static void OnBrightnessChanged(object sender, EventArrivedEventArgs e)
+    {
+        try
+        {
+            int brightness = Convert.ToInt32(e.NewEvent["Brightness"]);
+            BrightnessChanged?.Invoke(brightness);
+        }
+        catch
+        {
+        }
+    }
+
     public static int GetBrightness()
     {
         Initialize();
@@ -40,9 +82,7 @@ public static class BrightnessService
             
             foreach (ManagementObject obj in searcher.Get())
             {
-                int brightness = Convert.ToInt32(obj["CurrentBrightness"]);
-                _lastSetBrightness = brightness;
-                return brightness;
+                return Convert.ToInt32(obj["CurrentBrightness"]);
             }
         }
         catch
@@ -94,7 +134,6 @@ public static class BrightnessService
             foreach (ManagementObject obj in searcher.Get())
             {
                 obj.InvokeMethod("WmiSetBrightness", new object[] { 1, brightness });
-                _lastSetBrightness = brightness;
                 return true;
             }
         }
@@ -108,7 +147,7 @@ public static class BrightnessService
 
     public static int IncreaseBrightness(int step = 10)
     {
-        int current = _lastSetBrightness >= 0 ? _lastSetBrightness : GetBrightness();
+        int current = GetBrightness();
         if (current < 0) return -1;
 
         int newLevel = Math.Min(100, current + step);
@@ -119,7 +158,7 @@ public static class BrightnessService
 
     public static int DecreaseBrightness(int step = 10)
     {
-        int current = _lastSetBrightness >= 0 ? _lastSetBrightness : GetBrightness();
+        int current = GetBrightness();
         if (current < 0) return -1;
 
         int newLevel = Math.Max(0, current - step);

@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:LapKeys"
         xmlns:vm="clr-namespace:LapKeys.ViewModels"
         xmlns:helpers="clr-namespace:LapKeys.Helpers"
+        xmlns:views="clr-namespace:LapKeys.Views"
         mc:Ignorable="d"
         Title="{Binding Title}" 
         Height="520" 
@@ -95,7 +96,7 @@
             </Setter>
         </Style>
         
-        <!-- Rate Button Style (with selection support) -->
+        <!-- Rate Button Style -->
         <Style x:Key="RateButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
@@ -137,7 +138,7 @@
             </Setter>
         </Style>
         
-        <!-- Cycle Rate Button Style (toggleable) -->
+        <!-- Cycle Rate Button Style -->
         <Style x:Key="CycleRateButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource SubtleBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
@@ -220,7 +221,7 @@
             </Setter>
         </Style>
         
-        <!-- Icon Button Style (for theme toggle) -->
+        <!-- Icon Button Style -->
         <Style x:Key="IconButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
@@ -396,9 +397,11 @@
         <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,0,0,12"
                 Visibility="{Binding IsBrightnessSupported, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel>
+                <!-- Header with title and toggle -->
                 <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     
@@ -407,13 +410,14 @@
                                    FontSize="15" 
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Adjust display brightness"
+                        <TextBlock Text="Adjust brightness with keyboard shortcuts"
                                    FontSize="11"
                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                    Margin="0,2,0,0"/>
                     </StackPanel>
                     
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Current brightness value -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
                         <TextBlock FontSize="28" 
                                    FontWeight="Light"
                                    Foreground="{DynamicResource AccentBrush}"
@@ -425,46 +429,25 @@
                                    VerticalAlignment="Bottom"
                                    Margin="2,0,0,5"/>
                     </StackPanel>
+                    
+                    <!-- Enable/disable toggle -->
+                    <CheckBox Grid.Column="2" 
+                              Style="{StaticResource ToggleSwitchStyle}"
+                              IsChecked="{Binding IsBrightnessHotkeysEnabled}"
+                              VerticalAlignment="Center"
+                              ToolTip="Enable/disable brightness shortcuts"/>
                 </Grid>
                 
-                <!-- Brightness Slider -->
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <Button Grid.Column="0" 
-                            Content="☀" 
-                            FontSize="14"
-                            Style="{StaticResource ModernButtonStyle}"
-                            Command="{Binding DecreaseBrightnessCommand}"
-                            Padding="8,6"
-                            ToolTip="Decrease brightness"/>
-                    
-                    <Slider Grid.Column="1" 
-                            x:Name="BrightnessSlider"
-                            Minimum="0" 
-                            Maximum="100"
-                            Value="{Binding CurrentBrightness, Mode=OneWay}"
-                            VerticalAlignment="Center"
-                            Margin="12,0"
-                            LargeChange="10"
-                            SmallChange="1"
-                            ValueChanged="BrightnessSlider_ValueChanged"
-                            PreviewMouseLeftButtonDown="BrightnessSlider_PreviewMouseLeftButtonDown"
-                            PreviewMouseLeftButtonUp="BrightnessSlider_PreviewMouseLeftButtonUp"
-                            MouseMove="BrightnessSlider_MouseMove"/>
-                    
-                    <Button Grid.Column="2" 
-                            Content="🔆" 
-                            FontSize="14"
-                            Style="{StaticResource ModernButtonStyle}"
-                            Command="{Binding IncreaseBrightnessCommand}"
-                            Padding="8,6"
-                            ToolTip="Increase brightness"/>
-                </Grid>
+                <!-- Brightness Hotkeys -->
+                <views:HotkeyRow Margin="0,0,0,0"
+                                 Label="Increase:"
+                                 DisplayText="{Binding BrightnessUpHotkeyDisplayText}"
+                                 HotkeyType="BrightnessUp"/>
+                
+                <views:HotkeyRow Margin="0,8,0,0"
+                                 Label="Decrease:"
+                                 DisplayText="{Binding BrightnessDownHotkeyDisplayText}"
+                                 HotkeyType="BrightnessDown"/>
             </StackPanel>
         </Border>
         
@@ -553,121 +536,8 @@
             </StackPanel>
         </Border>
         
-        <!-- Brightness Shortcuts Card -->
-        <Border Grid.Row="4" Style="{StaticResource CardStyle}" Margin="0,0,0,12"
-                Visibility="{Binding IsBrightnessSupported, Converter={StaticResource BoolToVisibilityConverter}}">
-            <StackPanel>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <StackPanel Grid.Column="0">
-                        <TextBlock Text="Brightness Shortcuts" 
-                                   FontSize="15" 
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Adjust brightness with keyboard shortcuts"
-                                   FontSize="11"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                   Margin="0,2,0,0"/>
-                    </StackPanel>
-                    
-                    <CheckBox Grid.Column="1" 
-                              Style="{StaticResource ToggleSwitchStyle}"
-                              IsChecked="{Binding IsBrightnessHotkeysEnabled}"
-                              VerticalAlignment="Center"
-                              ToolTip="Enable/disable shortcuts"/>
-                </Grid>
-                
-                <!-- Brightness Up Hotkey -->
-                <Grid Margin="0,8,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <TextBlock Grid.Column="0" 
-                               Text="Increase:" 
-                               FontSize="12"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,12,0"/>
-                    
-                    <Border Grid.Column="1"
-                            Background="{DynamicResource SubtleBrush}" 
-                            CornerRadius="6"
-                            Padding="12,8"
-                            HorizontalAlignment="Left">
-                        <TextBlock Text="{Binding BrightnessUpHotkeyDisplayText}" 
-                                   FontFamily="Segoe UI"
-                                   FontSize="11"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
-                    </Border>
-                    
-                    <Button Grid.Column="2"
-                            Command="{Binding ToggleCaptureHotkeyCommand}"
-                            CommandParameter="BrightnessUp"
-                            Style="{StaticResource ModernButtonStyle}">
-                        <Button.Content>
-                            <MultiBinding Converter="{StaticResource HotkeyButtonTextConverter}"
-                                          ConverterParameter="BrightnessUp">
-                                <Binding Path="IsCapturingHotkey"/>
-                                <Binding Path="CapturingHotkeyType"/>
-                            </MultiBinding>
-                        </Button.Content>
-                    </Button>
-                </Grid>
-                
-                <!-- Brightness Down Hotkey -->
-                <Grid Margin="0,12,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <TextBlock Grid.Column="0" 
-                               Text="Decrease:" 
-                               FontSize="12"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,12,0"/>
-                    
-                    <Border Grid.Column="1"
-                            Background="{DynamicResource SubtleBrush}" 
-                            CornerRadius="6"
-                            Padding="12,8"
-                            HorizontalAlignment="Left">
-                        <TextBlock Text="{Binding BrightnessDownHotkeyDisplayText}" 
-                                   FontFamily="Segoe UI"
-                                   FontSize="11"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
-                    </Border>
-                    
-                    <Button Grid.Column="2"
-                            Command="{Binding ToggleCaptureHotkeyCommand}"
-                            CommandParameter="BrightnessDown"
-                            Style="{StaticResource ModernButtonStyle}">
-                        <Button.Content>
-                            <MultiBinding Converter="{StaticResource HotkeyButtonTextConverter}"
-                                          ConverterParameter="BrightnessDown">
-                                <Binding Path="IsCapturingHotkey"/>
-                                <Binding Path="CapturingHotkeyType"/>
-                            </MultiBinding>
-                        </Button.Content>
-                    </Button>
-                </Grid>
-                
-            </StackPanel>
-        </Border>
-        
         <!-- Settings Card -->
-        <Border Grid.Row="5" Style="{StaticResource CardStyle}" Margin="0,0,0,12">
+        <Border Grid.Row="4" Style="{StaticResource CardStyle}" Margin="0,0,0,12">
             <StackPanel>
                 <TextBlock Text="Settings" 
                            FontSize="15" 
@@ -732,33 +602,11 @@
         
         <!-- Footer -->
         <Grid Grid.Row="7">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            
             <!-- Status -->
-            <TextBlock Grid.Column="0" 
-                       Text="{Binding StatusMessage}" 
+            <TextBlock Text="{Binding StatusMessage}" 
                        FontSize="12"
                        Foreground="{DynamicResource TextTertiaryBrush}"
                        VerticalAlignment="Center"/>
-            
-            <!-- Buttons -->
-            <StackPanel Grid.Column="1" 
-                        Orientation="Horizontal">
-                <Button Content="Refresh" 
-                        Command="{Binding RefreshDisplayInfoCommand}"
-                        Style="{StaticResource ModernButtonStyle}"
-                        Margin="0,0,8,0"/>
-                <Button Content="Minimize to Tray" 
-                        Style="{StaticResource ModernButtonStyle}"
-                        Click="MinimizeToTray_Click"
-                        Margin="0,0,8,0"/>
-                <Button Content="Close" 
-                        Style="{StaticResource ModernButtonStyle}"
-                        Click="Close_Click"/>
-            </StackPanel>
         </Grid>
     </Grid>
     </ScrollViewer>

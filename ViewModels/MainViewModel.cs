@@ -28,6 +28,7 @@ public class MainViewModel : ViewModelBase
     private bool _isBrightnessHotkeysEnabled = true;
     private int _currentBrightness;
     private bool _isBrightnessSupported;
+    private bool _isExternalBrightnessUpdate;
 
     public string Title
     {
@@ -196,6 +197,8 @@ public class MainViewModel : ViewModelBase
         get => _isBrightnessSupported;
         private set => SetProperty(ref _isBrightnessSupported, value);
     }
+
+    public bool IsExternalBrightnessUpdate => _isExternalBrightnessUpdate;
 
     public ICommand CycleRefreshRateCommand { get; }
     public ICommand RefreshDisplayInfoCommand { get; }
@@ -449,7 +452,21 @@ public class MainViewModel : ViewModelBase
         {
             _currentBrightness = brightness;
             OnPropertyChanged(nameof(CurrentBrightness));
+            
+            BrightnessService.BrightnessChanged += OnExternalBrightnessChanged;
+            BrightnessService.StartWatching();
         }
+    }
+
+    private void OnExternalBrightnessChanged(int brightness)
+    {
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+        {
+            _isExternalBrightnessUpdate = true;
+            _currentBrightness = brightness;
+            OnPropertyChanged(nameof(CurrentBrightness));
+            _isExternalBrightnessUpdate = false;
+        });
     }
 
     public void ExecuteIncreaseBrightness()
