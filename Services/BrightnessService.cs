@@ -145,25 +145,4 @@ public static class BrightnessService
         return false;
     }
 
-    public static int IncreaseBrightness(int step = 10)
-    {
-        int current = GetBrightness();
-        if (current < 0) return -1;
-
-        int newLevel = Math.Min(100, current + step);
-        if (SetBrightness(newLevel))
-            return newLevel;
-        return -1;
-    }
-
-    public static int DecreaseBrightness(int step = 10)
-    {
-        int current = GetBrightness();
-        if (current < 0) return -1;
-
-        int newLevel = Math.Max(0, current - step);
-        if (SetBrightness(newLevel))
-            return newLevel;
-        return -1;
-    }
 }

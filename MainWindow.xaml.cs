@@ -18,6 +18,12 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        
+        // Force the creation of the handle so hotkeys can be registered
+        // even if the window is never shown (e.g., --minimized)
+        var helper = new System.Windows.Interop.WindowInteropHelper(this);
+        helper.EnsureHandle();
+
         DataContext = new MainViewModel();
         _hotkeyService = new HotkeyService();
         
@@ -26,10 +32,7 @@ public partial class MainWindow : Window
         ViewModel.BrightnessChanged += OnBrightnessChanged;
         ViewModel.RefreshRateHotkeyToggled += RegisterCurrentHotkey;
         ViewModel.BrightnessHotkeysToggled += RegisterCurrentHotkey;
-    }
-
-    private void Window_Loaded(object sender, RoutedEventArgs e)
-    {
+        
         _hotkeyService.Initialize(this);
         _hotkeyService.HotkeyPressed += OnHotkeyPressed;
         

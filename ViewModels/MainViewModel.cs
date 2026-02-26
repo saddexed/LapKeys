@@ -471,26 +471,14 @@ public class MainViewModel : ViewModelBase
 
     public void ExecuteIncreaseBrightness()
     {
-        int newBrightness = BrightnessService.IncreaseBrightness(10);
-        if (newBrightness >= 0)
-        {
-            _currentBrightness = newBrightness;
-            OnPropertyChanged(nameof(CurrentBrightness));
-            StatusMessage = $"Brightness: {newBrightness}%";
-            BrightnessChanged?.Invoke(newBrightness);
-        }
+        int target = Math.Min(100, _currentBrightness + 10);
+        SetBrightness(target);
     }
 
     public void ExecuteDecreaseBrightness()
     {
-        int newBrightness = BrightnessService.DecreaseBrightness(10);
-        if (newBrightness >= 0)
-        {
-            _currentBrightness = newBrightness;
-            OnPropertyChanged(nameof(CurrentBrightness));
-            StatusMessage = $"Brightness: {newBrightness}%";
-            BrightnessChanged?.Invoke(newBrightness);
-        }
+        int target = Math.Max(0, _currentBrightness - 10);
+        SetBrightness(target);
     }
 
     public void SetBrightness(int brightness)
