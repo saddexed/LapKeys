@@ -27,6 +27,8 @@ public class MainViewModel : ViewModelBase
     private bool _isRefreshRateHotkeyEnabled = true;
     private bool _isBrightnessHotkeysEnabled = true;
     private int _currentBrightness;
+    private int _targetBrightness = -1;
+    private DateTime _lastBrightnessSetTime = DateTime.MinValue;
     private bool _isBrightnessSupported;
     private bool _isExternalBrightnessUpdate;
 
@@ -462,7 +464,15 @@ public class MainViewModel : ViewModelBase
     {
         System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
+            // Ignore WMI events that arrive shortly after we set the brightness
+            // as WMI on battery might report scaled physical brightness instead of logical
+            if ((DateTime.UtcNow - _lastBrightnessSetTime).TotalSeconds < 2)
+            {
+                return;
+            }
+
             _isExternalBrightnessUpdate = true;
+            _targetBrightness = brightness;
             _currentBrightness = brightness;
             OnPropertyChanged(nameof(CurrentBrightness));
             _isExternalBrightnessUpdate = false;
@@ -471,21 +481,25 @@ public class MainViewModel : ViewModelBase
 
     public void ExecuteIncreaseBrightness()
     {
-        int target = Math.Min(100, _currentBrightness + 10);
+        int baseBrightness = _targetBrightness >= 0 ? _targetBrightness : _currentBrightness;
+        int target = Math.Min(100, baseBrightness + 10);
         SetBrightness(target);
     }
 
     public void ExecuteDecreaseBrightness()
     {
-        int target = Math.Max(0, _currentBrightness - 10);
+        int baseBrightness = _targetBrightness >= 0 ? _targetBrightness : _currentBrightness;
+        int target = Math.Max(0, baseBrightness - 10);
         SetBrightness(target);
     }
 
     public void SetBrightness(int brightness)
     {
         brightness = Math.Clamp(brightness, 0, 100);
+        _lastBrightnessSetTime = DateTime.UtcNow;
         if (BrightnessService.SetBrightness(brightness))
         {
+            _targetBrightness = brightness;
             _currentBrightness = brightness;
             OnPropertyChanged(nameof(CurrentBrightness));
             StatusMessage = $"Brightness: {brightness}%";
