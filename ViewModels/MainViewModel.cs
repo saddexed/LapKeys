@@ -230,6 +230,7 @@ public class MainViewModel : ViewModelBase
         _isRefreshRateHotkeyEnabled = _settings.IsRefreshRateHotkeyEnabled;
         _isBrightnessHotkeysEnabled = _settings.IsBrightnessHotkeysEnabled;
         _themeService.CurrentTheme = _isDarkMode ? ThemeService.Theme.Dark : ThemeService.Theme.Light;
+        _themeService.Initialize();
         
         Helpers.StartupManager.IsEnabled = _runAtStartup;
 

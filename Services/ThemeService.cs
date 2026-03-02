@@ -1,4 +1,6 @@
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Interop;
 using System.Windows.Media;
 using Color = System.Windows.Media.Color;
 
@@ -6,6 +8,12 @@ namespace LapKeys.Services;
 
 public class ThemeService
 {
+    [DllImport("dwmapi.dll", PreserveSig = true)]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+    private const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19;
+    private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
     public enum Theme
     {
         Light,
@@ -38,8 +46,9 @@ public class ThemeService
     public void ApplyTheme(Theme theme)
     {
         var resources = System.Windows.Application.Current.Resources;
+        bool isDark = theme == Theme.Dark;
 
-        if (theme == Theme.Dark)
+        if (isDark)
         {
             resources["BackgroundBrush"] = new SolidColorBrush(Color.FromRgb(0x1F, 0x1F, 0x1F));
             resources["CardBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(0x2D, 0x2D, 0x2D));
@@ -64,6 +73,48 @@ public class ThemeService
             resources["TextTertiaryBrush"] = new SolidColorBrush(Color.FromRgb(0x99, 0x99, 0x99));
             resources["SubtleBrush"] = new SolidColorBrush(Color.FromRgb(0xF5, 0xF5, 0xF5));
             resources["SubtleHoverBrush"] = new SolidColorBrush(Color.FromRgb(0xE8, 0xE8, 0xE8));
+        }
+
+        if (System.Windows.Application.Current != null)
+        {
+            foreach (Window window in System.Windows.Application.Current.Windows)
+            {
+                ApplyWindowDarkMode(window, isDark);
+            }
+        }
+    }
+
+    public void Initialize()
+    {
+        if (System.Windows.Application.Current != null)
+        {
+            System.Windows.Application.Current.MainWindow.SourceInitialized += (s, e) =>
+            {
+                ApplyWindowDarkMode((Window)s!, CurrentTheme == Theme.Dark);
+            };
+        }
+    }
+
+    private static void ApplyWindowDarkMode(Window window, bool isDark)
+    {
+        try
+        {
+            var helper = new WindowInteropHelper(window);
+            if (helper.Handle == IntPtr.Zero) return;
+
+            int useImmersiveDarkMode = isDark ? 1 : 0;
+            
+            // Try Windows 11 / Windows 10 20H1+
+            int hr = DwmSetWindowAttribute(helper.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useImmersiveDarkMode, sizeof(int));
+            if (hr != 0)
+            {
+                // Try older Windows 10 build 1809+
+                DwmSetWindowAttribute(helper.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1, ref useImmersiveDarkMode, sizeof(int));
+            }
+        }
+        catch
+        {
+            // Ignore if DWM is not available
         }
     }
 }
