@@ -31,6 +31,7 @@ public class MainViewModel : ViewModelBase
     private DateTime _lastBrightnessSetTime = DateTime.MinValue;
     private bool _isBrightnessSupported;
     private bool _isExternalBrightnessUpdate;
+    private MonitorInfo? _selectedMonitor;
 
     public string Title
     {
@@ -47,6 +48,33 @@ public class MainViewModel : ViewModelBase
             {
                 UpdateRefreshRateSelection();
             }
+        }
+    }
+
+    public ObservableCollection<MonitorInfo> Monitors { get; } = new();
+
+    public MonitorInfo? SelectedMonitor
+    {
+        get => _selectedMonitor;
+        set
+        {
+            if (SetProperty(ref _selectedMonitor, value))
+            {
+                UpdateMonitorSelection();
+                RefreshDisplayInfo();
+                if (_selectedMonitor != null)
+                {
+                    StatusMessage = $"Selected {_selectedMonitor.DeviceName}";
+                }
+            }
+        }
+    }
+
+    private void UpdateMonitorSelection()
+    {
+        foreach (var monitor in Monitors)
+        {
+            monitor.IsSelected = (monitor == _selectedMonitor);
         }
     }
 
@@ -202,6 +230,8 @@ public class MainViewModel : ViewModelBase
 
     public bool IsExternalBrightnessUpdate => _isExternalBrightnessUpdate;
 
+    public bool HasMultipleMonitors => Monitors.Count > 1;
+
     public ICommand CycleRefreshRateCommand { get; }
     public ICommand RefreshDisplayInfoCommand { get; }
     public ICommand StartCaptureHotkeyCommand { get; }
@@ -212,9 +242,38 @@ public class MainViewModel : ViewModelBase
     public ICommand CancelHotkeyCaptureCommand { get; }
     public ICommand IncreaseBrightnessCommand { get; }
     public ICommand DecreaseBrightnessCommand { get; }
+    public ICommand RefreshMonitorsCommand { get; }
+    public ICommand SelectMonitorCommand { get; }
 
     public event Action? RequestHotkeyCapture;
-    public event Action<int>? RefreshRateChanged;
+    public event Action<int, string?>? RefreshRateChanged;
+
+    public List<HotkeyBinding> GetAllRefreshRateHotkeys()
+    {
+        var hotkeys = new List<HotkeyBinding>();
+        foreach (var monitor in Monitors)
+        {
+            var binding = new HotkeyBinding(
+                "Cycle Refresh Rate",
+                "CycleRefreshRate",
+                _settings.GetModifierKeys(monitor.DeviceName),
+                _settings.GetKey(monitor.DeviceName),
+                hotkeys.Count + 10) { DeviceName = monitor.DeviceName };
+
+            if (binding.Key != Key.None)
+            {
+                hotkeys.Add(binding);
+            }
+        }
+        
+        // Add fallback if list is empty, e.g. for primary monitor
+        if (hotkeys.Count == 0 && CycleRefreshRateHotkey != null && CycleRefreshRateHotkey.Key != Key.None)
+        {
+            hotkeys.Add(CycleRefreshRateHotkey);
+        }
+        
+        return hotkeys;
+    }
     public event Action<int>? BrightnessChanged;
     public event Action? RefreshRateHotkeyToggled;
     public event Action? BrightnessHotkeysToggled;
@@ -234,13 +293,13 @@ public class MainViewModel : ViewModelBase
         
         Helpers.StartupManager.IsEnabled = _runAtStartup;
 
+        // Initialize with default or empty
         _cycleRefreshRateHotkey = new HotkeyBinding(
             "Cycle Refresh Rate",
             "CycleRefreshRate",
-            _settings.GetModifierKeys(),
-            _settings.GetKey(),
+            ModifierKeys.None,
+            Key.None,
             1);
-        _hotkeyDisplayText = _cycleRefreshRateHotkey.ToString();
 
         _brightnessUpHotkey = new HotkeyBinding(
             "Brightness Up",
@@ -268,28 +327,70 @@ public class MainViewModel : ViewModelBase
         CancelHotkeyCaptureCommand = new RelayCommand(_ => CancelHotkeyCapture());
         IncreaseBrightnessCommand = new RelayCommand(_ => ExecuteIncreaseBrightness(), _ => IsBrightnessSupported);
         DecreaseBrightnessCommand = new RelayCommand(_ => ExecuteDecreaseBrightness(), _ => IsBrightnessSupported);
+        RefreshMonitorsCommand = new RelayCommand(_ => InitializeMonitors());
+        SelectMonitorCommand = new RelayCommand(monitor => 
+        {
+            if (monitor is MonitorInfo m)
+            {
+                SelectedMonitor = m;
+            }
+        });
 
+        InitializeMonitors();
         RefreshDisplayInfo();
         InitializeBrightness();
     }
 
+    private void InitializeMonitors()
+    {
+        var monitors = DisplayService.GetMonitors();
+        Monitors.Clear();
+        foreach (var monitor in monitors)
+        {
+            Monitors.Add(monitor);
+        }
+        
+        if (Monitors.Count > 0)
+        {
+            SelectedMonitor = Monitors[0];
+            OnPropertyChanged(nameof(HasMultipleMonitors));
+        }
+    }
+
     public void RefreshDisplayInfo()
     {
-        var currentMode = DisplayService.GetCurrentDisplayMode();
+        string? deviceName = SelectedMonitor?.DeviceName;
+        var currentMode = DisplayService.GetCurrentDisplayMode(deviceName);
         if (currentMode != null)
         {
             CurrentRefreshRate = currentMode.RefreshRate;
             Title = $"LapKeys - {currentMode.Width}x{currentMode.Height}@{currentMode.RefreshRate}Hz";
         }
 
-        var savedCycleRates = _settings.GetCycleRefreshRates();
+        var savedCycleRates = _settings.GetCycleRefreshRates(deviceName);
 
         AvailableRefreshRates.Clear();
-        foreach (var rate in DisplayService.GetAvailableRefreshRates())
+        foreach (var rate in DisplayService.GetAvailableRefreshRates(deviceName))
         {
             bool isIncludedInCycle = savedCycleRates.Count == 0 || savedCycleRates.Contains(rate);
             AvailableRefreshRates.Add(new RefreshRateOption(rate, rate == CurrentRefreshRate, isIncludedInCycle));
         }
+
+        if (deviceName != null)
+        {
+            CycleRefreshRateHotkey = new HotkeyBinding(
+                "Cycle Refresh Rate",
+                "CycleRefreshRate",
+                _settings.GetModifierKeys(deviceName),
+                _settings.GetKey(deviceName),
+                1) { DeviceName = deviceName };
+        }
+        
+        // WMI Brightness generally only supports the built-in laptop display (usually the primary one).
+        // Since we don't have DDC/CI yet, we assume the first/primary monitor is the only one with WMI brightness.
+        // A more robust check could match WMI InstanceName with DeviceID.
+        bool isPrimary = deviceName == null || deviceName == Monitors.FirstOrDefault()?.DeviceName;
+        IsBrightnessSupported = isPrimary && BrightnessService.GetBrightness() >= 0;
 
         StatusMessage = $"Found {AvailableRefreshRates.Count} refresh rates";
     }
@@ -302,20 +403,29 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    public void ExecuteCycleRefreshRate()
+    public void ExecuteCycleRefreshRate(string? deviceName = null)
     {
-        var cycleRates = AvailableRefreshRates
-            .Where(r => r.IsIncludedInCycle)
-            .Select(r => r.Rate)
-            .ToList();
+        deviceName ??= SelectedMonitor?.DeviceName;
+        
+        var cycleRates = _settings.GetCycleRefreshRates(deviceName);
+        if (cycleRates.Count == 0 && deviceName == SelectedMonitor?.DeviceName)
+        {
+            cycleRates = AvailableRefreshRates
+                .Where(r => r.IsIncludedInCycle)
+                .Select(r => r.Rate)
+                .ToList();
+        }
 
-        int newRate = DisplayService.CycleRefreshRate(cycleRates);
+        int newRate = DisplayService.CycleRefreshRate(cycleRates, deviceName);
         if (newRate > 0)
         {
-            CurrentRefreshRate = newRate;
-            StatusMessage = $"Switched to {newRate}Hz";
-            RefreshDisplayInfo();
-            RefreshRateChanged?.Invoke(newRate);
+            if (deviceName == SelectedMonitor?.DeviceName)
+            {
+                CurrentRefreshRate = newRate;
+                RefreshDisplayInfo();
+            }
+            StatusMessage = $"Switched to {newRate}Hz on {(deviceName ?? "Primary")}";
+            RefreshRateChanged?.Invoke(newRate, deviceName);
         }
         else
         {
@@ -325,12 +435,13 @@ public class MainViewModel : ViewModelBase
 
     public void SetRefreshRate(int refreshRate)
     {
-        if (DisplayService.SetRefreshRate(refreshRate))
+        string? deviceName = SelectedMonitor?.DeviceName;
+        if (DisplayService.SetRefreshRate(refreshRate, deviceName))
         {
             CurrentRefreshRate = refreshRate;
             StatusMessage = $"Set refresh rate to {refreshRate}Hz";
             RefreshDisplayInfo();
-            RefreshRateChanged?.Invoke(refreshRate);
+            RefreshRateChanged?.Invoke(refreshRate, deviceName);
         }
         else
         {
@@ -407,7 +518,7 @@ public class MainViewModel : ViewModelBase
             switch (CapturingHotkeyType)
             {
                 case "CycleRefreshRate":
-                    CycleRefreshRateHotkey = new HotkeyBinding("Cycle Refresh Rate", "CycleRefreshRate", modifiers, key, 1);
+                    CycleRefreshRateHotkey = new HotkeyBinding("Cycle Refresh Rate", "CycleRefreshRate", modifiers, key, 1) { DeviceName = SelectedMonitor?.DeviceName ?? "" };
                     StatusMessage = $"Refresh rate hotkey set to {CycleRefreshRateHotkey}";
                     break;
                 case "BrightnessUp":
@@ -439,6 +550,11 @@ public class MainViewModel : ViewModelBase
         }
         
         CapturingHotkeyType = string.Empty;
+    }
+
+    public void SaveSettingsPublic()
+    {
+        SaveSettings();
     }
 
     public void SaveCycleRates()
@@ -513,8 +629,13 @@ public class MainViewModel : ViewModelBase
         _settings.IsDarkMode = IsDarkMode;
         _settings.MinimizeToTrayOnClose = MinimizeToTrayOnClose;
         _settings.RunAtStartup = RunAtStartup;
-        _settings.HotkeyModifiers = CycleRefreshRateHotkey.Modifiers.ToString();
-        _settings.HotkeyKey = CycleRefreshRateHotkey.Key.ToString();
+        
+        string? deviceName = SelectedMonitor?.DeviceName;
+        if (deviceName != null && CycleRefreshRateHotkey != null)
+        {
+            _settings.MonitorHotkeyModifiers[deviceName] = CycleRefreshRateHotkey.Modifiers.ToString();
+            _settings.MonitorHotkeyKeys[deviceName] = CycleRefreshRateHotkey.Key.ToString();
+        }
         
         _settings.BrightnessUpModifiers = BrightnessUpHotkey.Modifiers.ToString();
         _settings.BrightnessUpKey = BrightnessUpHotkey.Key.ToString();
@@ -527,7 +648,7 @@ public class MainViewModel : ViewModelBase
         var cycleRates = AvailableRefreshRates
             .Where(r => r.IsIncludedInCycle)
             .Select(r => r.Rate);
-        _settings.SetCycleRefreshRates(cycleRates);
+        _settings.SetCycleRefreshRates(cycleRates, deviceName);
         
         SettingsService.Save(_settings);
     }

@@ -28,10 +28,45 @@ public static partial class NativeMethods
     public const int CDS_TEST = 0x02;
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern bool EnumDisplayDevices(
+        string? lpDevice,
+        uint iDevNum,
+        ref DISPLAY_DEVICE lpDisplayDevice,
+        uint dwFlags);
+
+    [DllImport("user32.dll")]
+    public static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern bool EnumDisplaySettingsW(
         string? lpszDeviceName,
         int iModeNum,
         ref DEVMODE lpDevMode);
+
+    public delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RECT
+    {
+        public int left;
+        public int top;
+        public int right;
+        public int bottom;
+    }
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFOEX lpmi);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct MONITORINFOEX
+    {
+        public int cbSize;
+        public RECT rcMonitor;
+        public RECT rcWork;
+        public uint dwFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string szDevice;
+    }
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern int ChangeDisplaySettingsExW(
@@ -61,6 +96,21 @@ public static partial class NativeMethods
     public const uint MOD_NOREPEAT = 0x4000;
 
     #endregion
+}
+
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+public struct DISPLAY_DEVICE
+{
+    public uint cb;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+    public string DeviceName;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+    public string DeviceString;
+    public uint StateFlags;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+    public string DeviceID;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+    public string DeviceKey;
 }
 
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

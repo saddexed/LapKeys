@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using LapKeys.Services;
 using LapKeys.ViewModels;
 using LapKeys.Views;
@@ -45,13 +45,17 @@ public partial class MainWindow : Window
         
         if (ViewModel.IsRefreshRateHotkeyEnabled)
         {
-            if (_hotkeyService.RegisterHotkey(ViewModel.CycleRefreshRateHotkey))
+            var hotkeys = ViewModel.GetAllRefreshRateHotkeys();
+            foreach (var hk in hotkeys)
             {
-                ViewModel.StatusMessage = $"Hotkey registered: {ViewModel.CycleRefreshRateHotkey}";
-            }
-            else
-            {
-                ViewModel.StatusMessage = $"Failed to register hotkey (may be in use by another app)";
+                if (_hotkeyService.RegisterHotkey(hk))
+                {
+                    ViewModel.StatusMessage = $"Hotkey registered: {hk}";
+                }
+                else
+                {
+                    ViewModel.StatusMessage = $"Failed to register hotkey (may be in use by another app)";
+                }
             }
         }
         
@@ -67,7 +71,7 @@ public partial class MainWindow : Window
         switch (binding.Action)
         {
             case "CycleRefreshRate":
-                ViewModel.ExecuteCycleRefreshRate();
+                ViewModel.ExecuteCycleRefreshRate(binding.DeviceName);
                 break;
             case "BrightnessUp":
                 ViewModel.ExecuteIncreaseBrightness();
@@ -85,9 +89,9 @@ public partial class MainWindow : Window
         Focus();
     }
 
-    private void OnRefreshRateChanged(int newRate)
+    private void OnRefreshRateChanged(int newRate, string? deviceName)
     {
-        RefreshRateOverlay.ShowOverlay(newRate);
+        RefreshRateOverlay.ShowOverlay(newRate, deviceName);
     }
 
     private void OnBrightnessChanged(int brightness)
@@ -131,18 +135,18 @@ public partial class MainWindow : Window
 
     private void RefreshRateButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button button && button.DataContext is Models.RefreshRateOption option)
+        if (sender is Button button && button.DataContext is LapKeys.Models.RefreshRateOption option && DataContext is MainViewModel vm)
         {
-            ViewModel.SetRefreshRate(option.Rate);
+            vm.SetRefreshRate(option.Rate);
         }
     }
 
     private void CycleRateButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button button && button.DataContext is Models.RefreshRateOption option)
+        if (sender is Button button && button.DataContext is LapKeys.Models.RefreshRateOption option && DataContext is MainViewModel vm)
         {
             option.IsIncludedInCycle = !option.IsIncludedInCycle;
-            ViewModel.SaveCycleRates();
+            vm.SaveCycleRates();
         }
     }
 

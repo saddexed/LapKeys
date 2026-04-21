@@ -6,6 +6,7 @@ public class HotkeyBinding
 {
     public string Name { get; set; } = string.Empty;
     public string Action { get; set; } = string.Empty;
+    public string DeviceName { get; set; } = string.Empty;
     public ModifierKeys Modifiers { get; set; }
     public Key Key { get; set; }
     public int Id { get; set; }

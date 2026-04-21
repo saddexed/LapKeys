@@ -20,31 +20,33 @@ public class AppSettings
     public bool IsBrightnessHotkeysEnabled { get; set; } = true;
     
     public string CycleRefreshRates { get; set; } = "";
+
+    public Dictionary<string, string> MonitorCycleRates { get; set; } = new();
+    public Dictionary<string, string> MonitorHotkeyModifiers { get; set; } = new();
+    public Dictionary<string, string> MonitorHotkeyKeys { get; set; } = new();
     
-    public ModifierKeys GetModifierKeys()
+    public ModifierKeys GetModifierKeys(string? deviceName = null)
     {
-        var modifiers = ModifierKeys.None;
-        
-        if (string.IsNullOrEmpty(HotkeyModifiers))
-            return modifiers;
-            
-        if (HotkeyModifiers.Contains("Control"))
-            modifiers |= ModifierKeys.Control;
-        if (HotkeyModifiers.Contains("Alt"))
-            modifiers |= ModifierKeys.Alt;
-        if (HotkeyModifiers.Contains("Shift"))
-            modifiers |= ModifierKeys.Shift;
-        if (HotkeyModifiers.Contains("Windows"))
-            modifiers |= ModifierKeys.Windows;
-            
-        return modifiers;
+        string modifiersStr = HotkeyModifiers;
+        if (deviceName != null && MonitorHotkeyModifiers.TryGetValue(deviceName, out var dictVal))
+        {
+            modifiersStr = dictVal;
+        }
+
+        return ParseModifiers(modifiersStr);
     }
     
-    public Key GetKey()
+    public Key GetKey(string? deviceName = null)
     {
-        if (Enum.TryParse<Key>(HotkeyKey, out var key))
+        string keyStr = HotkeyKey;
+        if (deviceName != null && MonitorHotkeyKeys.TryGetValue(deviceName, out var dictVal))
+        {
+            keyStr = dictVal;
+        }
+
+        if (Enum.TryParse<Key>(keyStr, out var key))
             return key;
-        return Key.R;
+        return Key.None;
     }
     
     public ModifierKeys GetBrightnessUpModifiers()
@@ -90,20 +92,34 @@ public class AppSettings
         return modifiers;
     }
     
-    public List<int> GetCycleRefreshRates()
+    public List<int> GetCycleRefreshRates(string? deviceName = null)
     {
-        if (string.IsNullOrEmpty(CycleRefreshRates))
+        string ratesStr = CycleRefreshRates;
+        if (deviceName != null && MonitorCycleRates.TryGetValue(deviceName, out var dictVal))
+        {
+            ratesStr = dictVal;
+        }
+
+        if (string.IsNullOrEmpty(ratesStr))
             return new List<int>();
             
-        return CycleRefreshRates
+        return ratesStr
             .Split(',', StringSplitOptions.RemoveEmptyEntries)
             .Select(s => int.TryParse(s.Trim(), out var rate) ? rate : 0)
             .Where(r => r > 0)
             .ToList();
     }
     
-    public void SetCycleRefreshRates(IEnumerable<int> rates)
+    public void SetCycleRefreshRates(IEnumerable<int> rates, string? deviceName = null)
     {
-        CycleRefreshRates = string.Join(",", rates);
+        var ratesStr = string.Join(",", rates);
+        if (deviceName != null)
+        {
+            MonitorCycleRates[deviceName] = ratesStr;
+        }
+        else
+        {
+            CycleRefreshRates = ratesStr;
+        }
     }
 }
