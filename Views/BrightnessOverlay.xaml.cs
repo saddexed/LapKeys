@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Threading;
+using LapKeys.Helpers;
 
 namespace LapKeys.Views;
 
@@ -11,7 +12,7 @@ public partial class BrightnessOverlay : Window
     public BrightnessOverlay()
     {
         InitializeComponent();
-        
+
         _hideTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(2)
@@ -21,30 +22,21 @@ public partial class BrightnessOverlay : Window
             _hideTimer.Stop();
             Hide();
         };
-        
-        PositionOverlay();
     }
 
-    private void PositionOverlay()
-    {
-        var screen = SystemParameters.WorkArea;
-        Left = (screen.Width - Width) / 2;
-        Top = screen.Bottom - Height - 60;
-    }
-
-    public void ShowBrightness(int brightness)
+    public void ShowBrightness(int brightness, string? deviceName = null)
     {
         brightness = Math.Clamp(brightness, 0, 100);
-        
+
         PercentText.Text = $"{brightness}%";
-        
+
         _hideTimer.Stop();
         _hideTimer.Start();
-        
+
         Show();
-        
-        PositionOverlay();
-        
+
+        OverlayPositioner.PositionBottomCenter(this, deviceName);
+
         Dispatcher.BeginInvoke(new Action(() =>
         {
             double containerWidth = ProgressBarContainer.ActualWidth;
@@ -67,9 +59,9 @@ public partial class BrightnessOverlay : Window
         }
     }
 
-    public static void ShowOverlay(int brightness)
+    public static void ShowOverlay(int brightness, string? deviceName = null)
     {
-        Instance.ShowBrightness(brightness);
+        Instance.ShowBrightness(brightness, deviceName);
     }
 
     protected override void OnClosed(EventArgs e)

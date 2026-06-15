@@ -78,6 +78,105 @@ public static partial class NativeMethods
 
     #endregion
 
+    #region DisplayConfig (identify internal panel)
+
+    public const uint QDC_ONLY_ACTIVE_PATHS = 0x00000002;
+
+    // DISPLAYCONFIG_DEVICE_INFO_TYPE
+    public const uint DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME = 1;
+
+    // DISPLAYCONFIG_OUTPUT_TECHNOLOGY values that indicate a built-in/internal panel.
+    public const uint DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL = 0x80000000;
+    public const uint DISPLAYCONFIG_OUTPUT_TECHNOLOGY_LVDS = 6;
+    public const uint DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED = 11;
+    public const uint DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EMBEDDED = 13;
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct LUID
+    {
+        public uint LowPart;
+        public int HighPart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DISPLAYCONFIG_RATIONAL
+    {
+        public uint Numerator;
+        public uint Denominator;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DISPLAYCONFIG_PATH_SOURCE_INFO
+    {
+        public LUID adapterId;
+        public uint id;
+        public uint modeInfoIdx;
+        public uint statusFlags;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DISPLAYCONFIG_PATH_TARGET_INFO
+    {
+        public LUID adapterId;
+        public uint id;
+        public uint modeInfoIdx;
+        public uint outputTechnology;
+        public uint rotation;
+        public uint scaling;
+        public DISPLAYCONFIG_RATIONAL refreshRate;
+        public uint scanLineOrdering;
+        public int targetAvailable;
+        public uint statusFlags;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DISPLAYCONFIG_PATH_INFO
+    {
+        public DISPLAYCONFIG_PATH_SOURCE_INFO sourceInfo;
+        public DISPLAYCONFIG_PATH_TARGET_INFO targetInfo;
+        public uint flags;
+    }
+
+    // Opaque 64-byte mode info; we never inspect it, so reserve its size only.
+    [StructLayout(LayoutKind.Explicit, Size = 64)]
+    public struct DISPLAYCONFIG_MODE_INFO
+    {
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DISPLAYCONFIG_DEVICE_INFO_HEADER
+    {
+        public uint type;
+        public uint size;
+        public LUID adapterId;
+        public uint id;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct DISPLAYCONFIG_SOURCE_DEVICE_NAME
+    {
+        public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string viewGdiDeviceName;
+    }
+
+    [DllImport("user32.dll")]
+    public static extern int GetDisplayConfigBufferSizes(uint flags, out uint numPathArrayElements, out uint numModeInfoArrayElements);
+
+    [DllImport("user32.dll")]
+    public static extern int QueryDisplayConfig(
+        uint flags,
+        ref uint numPathArrayElements,
+        [Out] DISPLAYCONFIG_PATH_INFO[] pathInfoArray,
+        ref uint numModeInfoArrayElements,
+        [Out] DISPLAYCONFIG_MODE_INFO[] modeInfoArray,
+        IntPtr currentTopologyId);
+
+    [DllImport("user32.dll")]
+    public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SOURCE_DEVICE_NAME requestPacket);
+
+    #endregion
+
     #region Global Hotkeys
 
     public const int WM_HOTKEY = 0x0312;

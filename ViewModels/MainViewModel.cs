@@ -32,6 +32,7 @@ public class MainViewModel : ViewModelBase
     private bool _isBrightnessSupported;
     private bool _isExternalBrightnessUpdate;
     private MonitorInfo? _selectedMonitor;
+    private string? _internalDisplayDeviceName;
 
     public string Title
     {
@@ -274,7 +275,7 @@ public class MainViewModel : ViewModelBase
         
         return hotkeys;
     }
-    public event Action<int>? BrightnessChanged;
+    public event Action<int, string?>? BrightnessChanged;
     public event Action? RefreshRateHotkeyToggled;
     public event Action? BrightnessHotkeysToggled;
 
@@ -564,6 +565,8 @@ public class MainViewModel : ViewModelBase
 
     private void InitializeBrightness()
     {
+        _internalDisplayDeviceName = DisplayService.GetInternalDisplayDeviceName();
+
         int brightness = BrightnessService.GetBrightness();
         IsBrightnessSupported = brightness >= 0;
         
@@ -620,7 +623,7 @@ public class MainViewModel : ViewModelBase
             _currentBrightness = brightness;
             OnPropertyChanged(nameof(CurrentBrightness));
             StatusMessage = $"Brightness: {brightness}%";
-            BrightnessChanged?.Invoke(brightness);
+            BrightnessChanged?.Invoke(brightness, _internalDisplayDeviceName);
         }
     }
 

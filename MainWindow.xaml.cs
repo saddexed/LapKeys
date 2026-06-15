@@ -94,9 +94,9 @@ public partial class MainWindow : Window
         RefreshRateOverlay.ShowOverlay(newRate, deviceName);
     }
 
-    private void OnBrightnessChanged(int brightness)
+    private void OnBrightnessChanged(int brightness, string? deviceName)
     {
-        BrightnessOverlay.ShowOverlay(brightness);
+        BrightnessOverlay.ShowOverlay(brightness, deviceName);
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

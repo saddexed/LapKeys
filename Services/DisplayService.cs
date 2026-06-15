@@ -29,6 +29,61 @@ public static class DisplayService
         return monitors;
     }
 
+    /// <summary>
+    /// Returns the GDI device name (e.g. "\\.\DISPLAY1") of the built-in laptop panel,
+    /// which is the display WMI brightness actually controls. Returns null if none is found.
+    /// </summary>
+    public static string? GetInternalDisplayDeviceName()
+    {
+        if (NativeMethods.GetDisplayConfigBufferSizes(
+                NativeMethods.QDC_ONLY_ACTIVE_PATHS, out uint pathCount, out uint modeCount) != 0)
+        {
+            return null;
+        }
+
+        var paths = new NativeMethods.DISPLAYCONFIG_PATH_INFO[pathCount];
+        var modes = new NativeMethods.DISPLAYCONFIG_MODE_INFO[modeCount];
+
+        if (NativeMethods.QueryDisplayConfig(
+                NativeMethods.QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero) != 0)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < pathCount; i++)
+        {
+            uint tech = paths[i].targetInfo.outputTechnology;
+            bool isInternal =
+                tech == NativeMethods.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL ||
+                tech == NativeMethods.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_LVDS ||
+                tech == NativeMethods.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED ||
+                tech == NativeMethods.DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EMBEDDED;
+
+            if (!isInternal)
+                continue;
+
+            var sourceName = new NativeMethods.DISPLAYCONFIG_SOURCE_DEVICE_NAME
+            {
+                header = new NativeMethods.DISPLAYCONFIG_DEVICE_INFO_HEADER
+                {
+                    type = NativeMethods.DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME,
+                    size = (uint)System.Runtime.InteropServices.Marshal.SizeOf(
+                        typeof(NativeMethods.DISPLAYCONFIG_SOURCE_DEVICE_NAME)),
+                    adapterId = paths[i].sourceInfo.adapterId,
+                    id = paths[i].sourceInfo.id
+                }
+            };
+
+            if (NativeMethods.DisplayConfigGetDeviceInfo(ref sourceName) == 0
+                && !string.IsNullOrEmpty(sourceName.viewGdiDeviceName))
+            {
+                return sourceName.viewGdiDeviceName;
+            }
+        }
+
+        return null;
+    }
+
     public static DisplayMode? GetCurrentDisplayMode(string? deviceName = null)
     {
         var devMode = DEVMODE.Create();
