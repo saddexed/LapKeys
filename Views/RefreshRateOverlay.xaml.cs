@@ -24,6 +24,12 @@ public partial class RefreshRateOverlay : Window
         };
     }
 
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        OverlayPositioner.MakeNonActivating(this);
+    }
+
     public void ShowRefreshRate(int refreshRate, string? deviceName = null)
     {
         RateText.Text = refreshRate.ToString();

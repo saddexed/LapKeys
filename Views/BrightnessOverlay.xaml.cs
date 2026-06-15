@@ -24,6 +24,12 @@ public partial class BrightnessOverlay : Window
         };
     }
 
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        OverlayPositioner.MakeNonActivating(this);
+    }
+
     public void ShowBrightness(int brightness, string? deviceName = null)
     {
         brightness = Math.Clamp(brightness, 0, 100);

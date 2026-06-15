@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Interop;
 using LapKeys.Native;
 
 namespace LapKeys.Helpers;
@@ -8,6 +9,21 @@ namespace LapKeys.Helpers;
 /// </summary>
 public static class OverlayPositioner
 {
+    /// <summary>
+    /// Marks the window as non-activating so showing it never steals focus from the foreground app.
+    /// Call once after the HWND exists (e.g. from SourceInitialized).
+    /// </summary>
+    public static void MakeNonActivating(Window window)
+    {
+        var hwnd = new WindowInteropHelper(window).Handle;
+        if (hwnd == IntPtr.Zero)
+            return;
+
+        int exStyle = NativeMethods.GetWindowLong(hwnd, NativeMethods.GWL_EXSTYLE);
+        exStyle |= NativeMethods.WS_EX_NOACTIVATE | NativeMethods.WS_EX_TOOLWINDOW;
+        NativeMethods.SetWindowLong(hwnd, NativeMethods.GWL_EXSTYLE, exStyle);
+    }
+
     /// <summary>
     /// Places the window centered horizontally and near the bottom of the target monitor's work area.
     /// When <paramref name="deviceName"/> is null/empty or not found, falls back to the primary monitor.

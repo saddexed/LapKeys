@@ -8,6 +8,7 @@
         AllowsTransparency="True"
         Background="Transparent"
         Topmost="True"
+        ShowActivated="False"
         ShowInTaskbar="False"
         WindowStartupLocation="Manual"
         ResizeMode="NoResize">
