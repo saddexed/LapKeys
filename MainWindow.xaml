@@ -226,6 +226,74 @@
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="16"/>
         </Style>
+
+        <!-- Brightness Slider Style -->
+        <Style x:Key="BrightnessSliderStyle" TargetType="Slider">
+            <Setter Property="Minimum" Value="0"/>
+            <Setter Property="Maximum" Value="100"/>
+            <Setter Property="SmallChange" Value="1"/>
+            <Setter Property="LargeChange" Value="10"/>
+            <Setter Property="IsMoveToPointEnabled" Value="True"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid VerticalAlignment="Center" Height="20">
+                            <Border Height="6" CornerRadius="3"
+                                    Background="{DynamicResource SubtleBrush}"
+                                    BorderBrush="{DynamicResource CardBorderBrush}"
+                                    BorderThickness="1"
+                                    VerticalAlignment="Center"/>
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge" Focusable="False">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="6" CornerRadius="3"
+                                                        Background="{DynamicResource AccentBrush}"
+                                                        VerticalAlignment="Center"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge" Focusable="False">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Background="Transparent"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb x:Name="Thumb">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse x:Name="thumbEllipse"
+                                                         Width="16" Height="16"
+                                                         Fill="{DynamicResource AccentBrush}"
+                                                         Stroke="White"
+                                                         StrokeThickness="2"/>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="thumbEllipse" Property="Fill" Value="{DynamicResource AccentHoverBrush}"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         
         <!-- Toggle Switch Style -->
         <Style x:Key="ToggleSwitchStyle" TargetType="CheckBox">
@@ -481,7 +549,7 @@
                                    FontSize="15" 
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Adjust brightness with keyboard shortcuts"
+                        <TextBlock Text="Adjust brightness with the slider or keyboard shortcuts"
                                    FontSize="11"
                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                    Margin="0,2,0,0"/>
@@ -503,14 +571,35 @@
                     </StackPanel>
                     
                     <!-- Enable/disable toggle -->
-                    <CheckBox Grid.Column="2" 
+                    <CheckBox Grid.Column="2"
                               Style="{StaticResource ToggleSwitchStyle}"
                               IsChecked="{Binding IsBrightnessHotkeysEnabled}"
                               IsEnabled="{Binding IsBrightnessSupported}"
                               VerticalAlignment="Center"
                               ToolTip="Enable/disable brightness shortcuts"/>
                 </Grid>
-                
+
+                <!-- Brightness Slider -->
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="☀"
+                               FontSize="16"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0"/>
+
+                    <Slider Grid.Column="1"
+                            Style="{StaticResource BrightnessSliderStyle}"
+                            IsEnabled="{Binding IsBrightnessSupported}"
+                            Value="{Binding CurrentBrightness, Mode=TwoWay, Delay=30}"
+                            VerticalAlignment="Center"/>
+                </Grid>
+
                 <!-- Brightness Hotkeys -->
                 <StackPanel Visibility="{Binding IsBrightnessSupported, Converter={StaticResource BoolToVisibilityConverter}}">
                     <views:HotkeyRow Margin="0,0,0,0"

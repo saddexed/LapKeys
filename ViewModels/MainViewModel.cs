@@ -220,7 +220,23 @@ public class MainViewModel : ViewModelBase
     public int CurrentBrightness
     {
         get => _currentBrightness;
-        set => SetProperty(ref _currentBrightness, value);
+        set
+        {
+            int clamped = Math.Clamp(value, 0, 100);
+            if (clamped == _currentBrightness)
+                return;
+
+            // External/WMI updates set the field directly; only slider/user edits
+            // reach this setter, so apply them to the hardware.
+            if (_isExternalBrightnessUpdate)
+            {
+                SetProperty(ref _currentBrightness, clamped);
+            }
+            else
+            {
+                SetBrightness(clamped);
+            }
+        }
     }
 
     public bool IsBrightnessSupported
