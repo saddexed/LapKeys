@@ -160,6 +160,37 @@ public partial class MainWindow : Window
         {
             Hide();
         }
+
+        // WindowChrome clips a maximized window by the (invisible) resize border,
+        // so pad the root grid to keep content fully on-screen when maximized.
+        if (RootGrid != null)
+        {
+            RootGrid.Margin = WindowState == WindowState.Maximized
+                ? new Thickness(7)
+                : new Thickness(0);
+        }
+
+        // Swap the maximize/restore glyph to match the current state.
+        if (MaximizeButton != null)
+        {
+            MaximizeButton.Content = WindowState == WindowState.Maximized ? "" : "";
+            MaximizeButton.ToolTip = WindowState == WindowState.Maximized ? "Restore" : "Maximize";
+        }
+    }
+
+    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void MaximizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+    }
+
+    private void CloseButton_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
     }
 
     private void ScrollViewer_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)

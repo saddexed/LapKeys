@@ -55,6 +55,7 @@ public class ThemeService
             resources["CardBorderBrush"] = new SolidColorBrush(Color.FromRgb(0x3D, 0x3D, 0x3D));
             resources["AccentBrush"] = new SolidColorBrush(Color.FromRgb(0x60, 0xCD, 0xFF));
             resources["AccentHoverBrush"] = new SolidColorBrush(Color.FromRgb(0x4C, 0xB8, 0xE8));
+            resources["AccentSubtleBrush"] = new SolidColorBrush(Color.FromArgb(0x2E, 0x60, 0xCD, 0xFF));
             resources["TextPrimaryBrush"] = new SolidColorBrush(Color.FromRgb(0xFF, 0xFF, 0xFF));
             resources["TextSecondaryBrush"] = new SolidColorBrush(Color.FromRgb(0xAA, 0xAA, 0xAA));
             resources["TextTertiaryBrush"] = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
@@ -68,6 +69,7 @@ public class ThemeService
             resources["CardBorderBrush"] = new SolidColorBrush(Color.FromRgb(0xE5, 0xE5, 0xE5));
             resources["AccentBrush"] = new SolidColorBrush(Color.FromRgb(0x00, 0x78, 0xD4));
             resources["AccentHoverBrush"] = new SolidColorBrush(Color.FromRgb(0x10, 0x6E, 0xBE));
+            resources["AccentSubtleBrush"] = new SolidColorBrush(Color.FromArgb(0x22, 0x00, 0x78, 0xD4));
             resources["TextPrimaryBrush"] = new SolidColorBrush(Color.FromRgb(0x1A, 0x1A, 0x1A));
             resources["TextSecondaryBrush"] = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66));
             resources["TextTertiaryBrush"] = new SolidColorBrush(Color.FromRgb(0x99, 0x99, 0x99));
