@@ -26,6 +26,7 @@ public class MainViewModel : ViewModelBase
     private bool _runAtStartup;
     private bool _isRefreshRateHotkeyEnabled = true;
     private bool _isBrightnessHotkeysEnabled = true;
+    private bool _useUnifiedHotkeys;
     private int _currentBrightness;
     private int _targetBrightness = -1;
     private DateTime _lastBrightnessSetTime = DateTime.MinValue;
@@ -217,6 +218,30 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    public bool UseUnifiedHotkeys
+    {
+        get => _useUnifiedHotkeys;
+        set
+        {
+            if (SetProperty(ref _useUnifiedHotkeys, value))
+            {
+                _settings.UseUnifiedHotkeys = value;
+
+                // Load the hotkeys belonging to the mode we just switched into, so the UI
+                // and registrations reflect that profile (and we don't overwrite the other
+                // mode's stored slots).
+                LoadBrightnessHotkeys();
+                RefreshDisplayInfo();
+
+                SettingsService.Save(_settings);
+
+                // Re-register both refresh-rate and brightness hotkeys for the new mode.
+                RefreshRateHotkeyToggled?.Invoke();
+                BrightnessHotkeysToggled?.Invoke();
+            }
+        }
+    }
+
     public int CurrentBrightness
     {
         get => _currentBrightness;
@@ -268,6 +293,24 @@ public class MainViewModel : ViewModelBase
     public List<HotkeyBinding> GetAllRefreshRateHotkeys()
     {
         var hotkeys = new List<HotkeyBinding>();
+        // Unified mode: a single hotkey that acts on whichever monitor is in view.
+        // Empty DeviceName is the sentinel for "resolve the active monitor at press time".
+        if (_useUnifiedHotkeys)
+        {
+            var unified = new HotkeyBinding(
+                "Cycle Refresh Rate",
+                "CycleRefreshRate",
+                _settings.GetUnifiedModifiers(),
+                _settings.GetUnifiedKey(),
+                10) { DeviceName = "" };
+
+            if (unified.Key != Key.None)
+            {
+                hotkeys.Add(unified);
+            }
+            return hotkeys;
+        }
+
         foreach (var monitor in Monitors)
         {
             var binding = new HotkeyBinding(
@@ -282,19 +325,44 @@ public class MainViewModel : ViewModelBase
                 hotkeys.Add(binding);
             }
         }
-        
+
         // Add fallback if list is empty, e.g. for primary monitor
         if (hotkeys.Count == 0 && CycleRefreshRateHotkey != null && CycleRefreshRateHotkey.Key != Key.None)
         {
             hotkeys.Add(CycleRefreshRateHotkey);
         }
-        
+
         return hotkeys;
     }
+
+    /// <summary>
+    /// Loads the brightness up/down hotkeys for the current mode (unified profile vs normal),
+    /// reading from the matching config slots so toggling modes restores each profile.
+    /// </summary>
+    private void LoadBrightnessHotkeys()
+    {
+        if (_useUnifiedHotkeys)
+        {
+            BrightnessUpHotkey = new HotkeyBinding("Brightness Up", "BrightnessUp",
+                _settings.GetUnifiedBrightnessUpModifiers(), _settings.GetUnifiedBrightnessUpKey(), 2);
+            BrightnessDownHotkey = new HotkeyBinding("Brightness Down", "BrightnessDown",
+                _settings.GetUnifiedBrightnessDownModifiers(), _settings.GetUnifiedBrightnessDownKey(), 3);
+        }
+        else
+        {
+            BrightnessUpHotkey = new HotkeyBinding("Brightness Up", "BrightnessUp",
+                _settings.GetBrightnessUpModifiers(), _settings.GetBrightnessUpKey(), 2);
+            BrightnessDownHotkey = new HotkeyBinding("Brightness Down", "BrightnessDown",
+                _settings.GetBrightnessDownModifiers(), _settings.GetBrightnessDownKey(), 3);
+        }
+
+        BrightnessUpHotkeyDisplayText = BrightnessUpHotkey.ToString();
+        BrightnessDownHotkeyDisplayText = BrightnessDownHotkey.ToString();
+    }
+
     public event Action<int, string?>? BrightnessChanged;
     public event Action? RefreshRateHotkeyToggled;
     public event Action? BrightnessHotkeysToggled;
-
     public MainViewModel()
     {
         _themeService = new ThemeService();
@@ -305,6 +373,7 @@ public class MainViewModel : ViewModelBase
         _runAtStartup = _settings.RunAtStartup;
         _isRefreshRateHotkeyEnabled = _settings.IsRefreshRateHotkeyEnabled;
         _isBrightnessHotkeysEnabled = _settings.IsBrightnessHotkeysEnabled;
+        _useUnifiedHotkeys = _settings.UseUnifiedHotkeys;
         _themeService.CurrentTheme = _isDarkMode ? ThemeService.Theme.Dark : ThemeService.Theme.Light;
         _themeService.Initialize();
         
@@ -333,6 +402,8 @@ public class MainViewModel : ViewModelBase
             _settings.GetBrightnessDownKey(),
             3);
         _brightnessDownHotkeyDisplayText = _brightnessDownHotkey.ToString();
+
+        LoadBrightnessHotkeys();
 
         CycleRefreshRateCommand = new RelayCommand(_ => ExecuteCycleRefreshRate());
         RefreshDisplayInfoCommand = new RelayCommand(_ => RefreshDisplayInfo());
@@ -393,7 +464,17 @@ public class MainViewModel : ViewModelBase
             AvailableRefreshRates.Add(new RefreshRateOption(rate, rate == CurrentRefreshRate, isIncludedInCycle));
         }
 
-        if (deviceName != null)
+        if (_useUnifiedHotkeys)
+        {
+            // One global hotkey shared across all monitors (unified profile slot).
+            CycleRefreshRateHotkey = new HotkeyBinding(
+                "Cycle Refresh Rate",
+                "CycleRefreshRate",
+                _settings.GetUnifiedModifiers(),
+                _settings.GetUnifiedKey(),
+                1) { DeviceName = "" };
+        }
+        else if (deviceName != null)
         {
             CycleRefreshRateHotkey = new HotkeyBinding(
                 "Cycle Refresh Rate",
@@ -535,7 +616,8 @@ public class MainViewModel : ViewModelBase
             switch (CapturingHotkeyType)
             {
                 case "CycleRefreshRate":
-                    CycleRefreshRateHotkey = new HotkeyBinding("Cycle Refresh Rate", "CycleRefreshRate", modifiers, key, 1) { DeviceName = SelectedMonitor?.DeviceName ?? "" };
+                    CycleRefreshRateHotkey = new HotkeyBinding("Cycle Refresh Rate", "CycleRefreshRate", modifiers, key, 1)
+                        { DeviceName = _useUnifiedHotkeys ? "" : (SelectedMonitor?.DeviceName ?? "") };
                     StatusMessage = $"Refresh rate hotkey set to {CycleRefreshRateHotkey}";
                     break;
                 case "BrightnessUp":
@@ -650,19 +732,40 @@ public class MainViewModel : ViewModelBase
         _settings.RunAtStartup = RunAtStartup;
         
         string? deviceName = SelectedMonitor?.DeviceName;
-        if (deviceName != null && CycleRefreshRateHotkey != null)
+        if (CycleRefreshRateHotkey != null)
         {
-            _settings.MonitorHotkeyModifiers[deviceName] = CycleRefreshRateHotkey.Modifiers.ToString();
-            _settings.MonitorHotkeyKeys[deviceName] = CycleRefreshRateHotkey.Key.ToString();
+            if (_useUnifiedHotkeys)
+            {
+                // Persist in the unified profile slot, separate from per-monitor hotkeys.
+                _settings.UnifiedHotkeyModifiers = CycleRefreshRateHotkey.Modifiers.ToString();
+                _settings.UnifiedHotkeyKey = CycleRefreshRateHotkey.Key.ToString();
+            }
+            else if (deviceName != null)
+            {
+                _settings.MonitorHotkeyModifiers[deviceName] = CycleRefreshRateHotkey.Modifiers.ToString();
+                _settings.MonitorHotkeyKeys[deviceName] = CycleRefreshRateHotkey.Key.ToString();
+            }
         }
-        
-        _settings.BrightnessUpModifiers = BrightnessUpHotkey.Modifiers.ToString();
-        _settings.BrightnessUpKey = BrightnessUpHotkey.Key.ToString();
-        _settings.BrightnessDownModifiers = BrightnessDownHotkey.Modifiers.ToString();
-        _settings.BrightnessDownKey = BrightnessDownHotkey.Key.ToString();
-        
+
+        if (_useUnifiedHotkeys)
+        {
+            // Brightness hotkeys belong to the unified profile slot.
+            _settings.UnifiedBrightnessUpModifiers = BrightnessUpHotkey.Modifiers.ToString();
+            _settings.UnifiedBrightnessUpKey = BrightnessUpHotkey.Key.ToString();
+            _settings.UnifiedBrightnessDownModifiers = BrightnessDownHotkey.Modifiers.ToString();
+            _settings.UnifiedBrightnessDownKey = BrightnessDownHotkey.Key.ToString();
+        }
+        else
+        {
+            _settings.BrightnessUpModifiers = BrightnessUpHotkey.Modifiers.ToString();
+            _settings.BrightnessUpKey = BrightnessUpHotkey.Key.ToString();
+            _settings.BrightnessDownModifiers = BrightnessDownHotkey.Modifiers.ToString();
+            _settings.BrightnessDownKey = BrightnessDownHotkey.Key.ToString();
+        }
+
         _settings.IsRefreshRateHotkeyEnabled = IsRefreshRateHotkeyEnabled;
         _settings.IsBrightnessHotkeysEnabled = IsBrightnessHotkeysEnabled;
+        _settings.UseUnifiedHotkeys = UseUnifiedHotkeys;
         
         var cycleRates = AvailableRefreshRates
             .Where(r => r.IsIncludedInCycle)

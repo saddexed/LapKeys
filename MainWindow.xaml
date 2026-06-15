@@ -635,7 +635,7 @@
                                    Margin="0,2,0,0"/>
                     </StackPanel>
                     
-                    <CheckBox Grid.Column="1" 
+                    <CheckBox Grid.Column="1"
                               Style="{StaticResource ToggleSwitchStyle}"
                               IsChecked="{Binding IsRefreshRateHotkeyEnabled}"
                               VerticalAlignment="Center"
@@ -734,9 +734,35 @@
                                    TextWrapping="Wrap"/>
                     </StackPanel>
                     
-                    <CheckBox Grid.Column="1" 
+                    <CheckBox Grid.Column="1"
                               Style="{StaticResource ToggleSwitchStyle}"
                               IsChecked="{Binding RunAtStartup}"
+                              VerticalAlignment="Center"
+                              Margin="12,0,0,0"/>
+                </Grid>
+
+                <!-- Unified Hotkey Setting -->
+                <Grid Margin="0,12,0,0"
+                      Visibility="{Binding HasMultipleMonitors, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Unified Hotkeys"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="Use one set of shortcuts that act on whichever monitor is in focus (or under the cursor)"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   Margin="0,2,0,0"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <CheckBox Grid.Column="1"
+                              Style="{StaticResource ToggleSwitchStyle}"
+                              IsChecked="{Binding UseUnifiedHotkeys}"
                               VerticalAlignment="Center"
                               Margin="12,0,0,0"/>
                 </Grid>

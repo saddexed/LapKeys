@@ -18,6 +18,16 @@ public class AppSettings
     
     public bool IsRefreshRateHotkeyEnabled { get; set; } = true;
     public bool IsBrightnessHotkeysEnabled { get; set; } = true;
+    public bool UseUnifiedHotkeys { get; set; } = false;
+
+    // Unified-mode hotkeys. Stored separately from the per-monitor / normal hotkeys
+    // so toggling UseUnifiedHotkeys off restores whatever was configured before.
+    public string UnifiedHotkeyModifiers { get; set; } = "Control, Shift";
+    public string UnifiedHotkeyKey { get; set; } = "R";
+    public string UnifiedBrightnessUpModifiers { get; set; } = "Control, Shift";
+    public string UnifiedBrightnessUpKey { get; set; } = "Up";
+    public string UnifiedBrightnessDownModifiers { get; set; } = "Control, Shift";
+    public string UnifiedBrightnessDownKey { get; set; } = "Down";
     
     public string CycleRefreshRates { get; set; } = "";
 
@@ -65,13 +75,28 @@ public class AppSettings
     {
         return ParseModifiers(BrightnessDownModifiers);
     }
-    
+
     public Key GetBrightnessDownKey()
     {
         if (Enum.TryParse<Key>(BrightnessDownKey, out var key))
             return key;
         return Key.Down;
     }
+
+    public ModifierKeys GetUnifiedModifiers() => ParseModifiers(UnifiedHotkeyModifiers);
+
+    public Key GetUnifiedKey()
+        => Enum.TryParse<Key>(UnifiedHotkeyKey, out var key) ? key : Key.None;
+
+    public ModifierKeys GetUnifiedBrightnessUpModifiers() => ParseModifiers(UnifiedBrightnessUpModifiers);
+
+    public Key GetUnifiedBrightnessUpKey()
+        => Enum.TryParse<Key>(UnifiedBrightnessUpKey, out var key) ? key : Key.Up;
+
+    public ModifierKeys GetUnifiedBrightnessDownModifiers() => ParseModifiers(UnifiedBrightnessDownModifiers);
+
+    public Key GetUnifiedBrightnessDownKey()
+        => Enum.TryParse<Key>(UnifiedBrightnessDownKey, out var key) ? key : Key.Down;
     
     private ModifierKeys ParseModifiers(string modifiersStr)
     {

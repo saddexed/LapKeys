@@ -84,6 +84,39 @@ public static class DisplayService
         return null;
     }
 
+    /// <summary>
+    /// Returns the GDI device name of the monitor currently "in view": the monitor hosting
+    /// the foreground window, falling back to the monitor under the mouse cursor.
+    /// Returns null if it cannot be determined.
+    /// </summary>
+    public static string? GetActiveMonitorDeviceName()
+    {
+        IntPtr hMonitor = IntPtr.Zero;
+
+        IntPtr foreground = NativeMethods.GetForegroundWindow();
+        if (foreground != IntPtr.Zero)
+        {
+            hMonitor = NativeMethods.MonitorFromWindow(foreground, NativeMethods.MONITOR_DEFAULTTONEAREST);
+        }
+
+        if (hMonitor == IntPtr.Zero && NativeMethods.GetCursorPos(out var pt))
+        {
+            hMonitor = NativeMethods.MonitorFromPoint(pt, NativeMethods.MONITOR_DEFAULTTONEAREST);
+        }
+
+        if (hMonitor == IntPtr.Zero)
+            return null;
+
+        var mi = new NativeMethods.MONITORINFOEX();
+        mi.cbSize = System.Runtime.InteropServices.Marshal.SizeOf(typeof(NativeMethods.MONITORINFOEX));
+        if (NativeMethods.GetMonitorInfo(hMonitor, ref mi))
+        {
+            return mi.szDevice.TrimEnd('\0');
+        }
+
+        return null;
+    }
+
     public static DisplayMode? GetCurrentDisplayMode(string? deviceName = null)
     {
         var devMode = DEVMODE.Create();

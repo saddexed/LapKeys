@@ -71,7 +71,11 @@ public partial class MainWindow : Window
         switch (binding.Action)
         {
             case "CycleRefreshRate":
-                ViewModel.ExecuteCycleRefreshRate(binding.DeviceName);
+                // Unified hotkey (empty DeviceName): act on whichever monitor is in view.
+                string? device = string.IsNullOrEmpty(binding.DeviceName)
+                    ? Services.DisplayService.GetActiveMonitorDeviceName()
+                    : binding.DeviceName;
+                ViewModel.ExecuteCycleRefreshRate(device);
                 break;
             case "BrightnessUp":
                 ViewModel.ExecuteIncreaseBrightness();
