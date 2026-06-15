@@ -173,6 +173,33 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OpenLogs_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            string path = LogService.LogFilePath;
+            if (System.IO.File.Exists(path))
+            {
+                // Open the log file in the default text viewer.
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+            }
+            else
+            {
+                // No log yet — open the containing folder instead.
+                string? dir = System.IO.Path.GetDirectoryName(path);
+                if (dir != null)
+                {
+                    System.IO.Directory.CreateDirectory(dir);
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(dir) { UseShellExecute = true });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogService.Error("Failed to open log file", ex);
+        }
+    }
+
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
         if (ViewModel.MinimizeToTrayOnClose)

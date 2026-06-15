@@ -774,11 +774,28 @@
         
         <!-- Footer -->
         <Grid Grid.Row="7">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
             <!-- Status -->
-            <TextBlock Text="{Binding StatusMessage}" 
+            <TextBlock Grid.Column="0"
+                       Text="{Binding StatusMessage}"
                        FontSize="12"
-                       Foreground="{DynamicResource TextTertiaryBrush}"
-                       VerticalAlignment="Center"/>
+                       Foreground="{Binding StatusBrush}"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"/>
+
+            <!-- Open logs -->
+            <Button Grid.Column="1"
+                    Style="{StaticResource IconButtonStyle}"
+                    Click="OpenLogs_Click"
+                    Padding="6,2"
+                    FontSize="11"
+                    ToolTip="Open log file">
+                <TextBlock Text="Logs" FontSize="11"/>
+            </Button>
         </Grid>
     </Grid>
     </ScrollViewer>

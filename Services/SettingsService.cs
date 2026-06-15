@@ -30,9 +30,9 @@ public static class SettingsService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load settings: {ex.Message}");
+            LogService.Error("Failed to load settings", ex);
         }
-        
+
         return new AppSettings();
     }
 
@@ -50,7 +50,7 @@ public static class SettingsService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to save settings: {ex.Message}");
+            LogService.Error("Failed to save settings", ex);
         }
     }
 }

@@ -66,7 +66,7 @@ public class MainViewModel : ViewModelBase
                 RefreshDisplayInfo();
                 if (_selectedMonitor != null)
                 {
-                    StatusMessage = $"Selected {_selectedMonitor.DeviceName}";
+                    StatusMessage = $"Selected {DescribeMonitor(_selectedMonitor.DeviceName)}";
                 }
             }
         }
@@ -83,7 +83,55 @@ public class MainViewModel : ViewModelBase
     public string StatusMessage
     {
         get => _statusMessage;
-        set => SetProperty(ref _statusMessage, value);
+        set
+        {
+            if (SetProperty(ref _statusMessage, value) && !string.IsNullOrWhiteSpace(value))
+            {
+                LogService.Info(value);
+            }
+        }
+    }
+
+    private System.Windows.Media.Brush _statusBrush = StatusInfoBrush;
+    public System.Windows.Media.Brush StatusBrush
+    {
+        get => _statusBrush;
+        set => SetProperty(ref _statusBrush, value);
+    }
+
+    private static readonly System.Windows.Media.Brush StatusInfoBrush = MakeFrozen(0x88, 0x88, 0x88);
+    private static readonly System.Windows.Media.Brush StatusWarnBrush = MakeFrozen(0xE0, 0xA0, 0x30);
+    private static readonly System.Windows.Media.Brush StatusErrorBrush = MakeFrozen(0xE0, 0x50, 0x50);
+
+    private static System.Windows.Media.Brush MakeFrozen(byte r, byte g, byte b)
+    {
+        var brush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
+    }
+
+    private void OnLogged(LogLevel level, string message)
+    {
+        // LogService may fire from background threads; marshal to the UI thread.
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher != null && !dispatcher.CheckAccess())
+        {
+            dispatcher.BeginInvoke(new Action(() => OnLogged(level, message)));
+            return;
+        }
+
+        StatusBrush = level switch
+        {
+            LogLevel.Error => StatusErrorBrush,
+            LogLevel.Warning => StatusWarnBrush,
+            _ => StatusInfoBrush
+        };
+
+        // Surface warnings/errors that did not originate from a StatusMessage assignment.
+        if (level != LogLevel.Info)
+        {
+            SetProperty(ref _statusMessage, message, nameof(StatusMessage));
+        }
     }
 
     public bool IsDarkMode
@@ -405,6 +453,8 @@ public class MainViewModel : ViewModelBase
 
         LoadBrightnessHotkeys();
 
+        LogService.Logged += OnLogged;
+
         CycleRefreshRateCommand = new RelayCommand(_ => ExecuteCycleRefreshRate());
         RefreshDisplayInfoCommand = new RelayCommand(_ => RefreshDisplayInfo());
         StartCaptureHotkeyCommand = new RelayCommand(_ => StartHotkeyCapture("CycleRefreshRate"), _ => !IsCapturingHotkey);
@@ -489,8 +539,6 @@ public class MainViewModel : ViewModelBase
         // A more robust check could match WMI InstanceName with DeviceID.
         bool isPrimary = deviceName == null || deviceName == Monitors.FirstOrDefault()?.DeviceName;
         IsBrightnessSupported = isPrimary && BrightnessService.GetBrightness() >= 0;
-
-        StatusMessage = $"Found {AvailableRefreshRates.Count} refresh rates";
     }
 
     private void UpdateRefreshRateSelection()
@@ -522,12 +570,12 @@ public class MainViewModel : ViewModelBase
                 CurrentRefreshRate = newRate;
                 RefreshDisplayInfo();
             }
-            StatusMessage = $"Switched to {newRate}Hz on {(deviceName ?? "Primary")}";
+            StatusMessage = $"Changed {DescribeMonitor(deviceName)} refresh rate to {newRate}Hz";
             RefreshRateChanged?.Invoke(newRate, deviceName);
         }
         else
         {
-            StatusMessage = "Failed to cycle refresh rate";
+            StatusMessage = $"Failed to cycle {DescribeMonitor(deviceName)} refresh rate";
         }
     }
 
@@ -537,14 +585,27 @@ public class MainViewModel : ViewModelBase
         if (DisplayService.SetRefreshRate(refreshRate, deviceName))
         {
             CurrentRefreshRate = refreshRate;
-            StatusMessage = $"Set refresh rate to {refreshRate}Hz";
+            StatusMessage = $"Changed {DescribeMonitor(deviceName)} refresh rate to {refreshRate}Hz";
             RefreshDisplayInfo();
             RefreshRateChanged?.Invoke(refreshRate, deviceName);
         }
         else
         {
-            StatusMessage = $"Failed to set refresh rate to {refreshRate}Hz";
+            StatusMessage = $"Failed to set {DescribeMonitor(deviceName)} refresh rate to {refreshRate}Hz";
         }
+    }
+
+    /// <summary>
+    /// Returns a friendly label for a monitor device name for log/status messages,
+    /// e.g. "Monitor 1 (\\.\DISPLAY1)". Falls back to "Primary" when unknown.
+    /// </summary>
+    private string DescribeMonitor(string? deviceName)
+    {
+        if (string.IsNullOrEmpty(deviceName))
+            return "Primary";
+
+        var monitor = Monitors.FirstOrDefault(m => m.DeviceName == deviceName);
+        return monitor != null ? $"Monitor {monitor.Index} ({deviceName})" : deviceName;
     }
 
     private void StartHotkeyCapture(string hotkeyType)
@@ -720,7 +781,7 @@ public class MainViewModel : ViewModelBase
             _targetBrightness = brightness;
             _currentBrightness = brightness;
             OnPropertyChanged(nameof(CurrentBrightness));
-            StatusMessage = $"Brightness: {brightness}%";
+            StatusMessage = $"Changed {DescribeMonitor(_internalDisplayDeviceName)} brightness to {brightness}%";
             BrightnessChanged?.Invoke(brightness, _internalDisplayDeviceName);
         }
     }
